@@ -1,8 +1,10 @@
 # ItsVital
 
-[![Open ItsVital](https://img.shields.io/badge/Open%20ItsVital-on%20the%20web-blue?style=for-the-badge)](https://jayspancake.github.io/ItsVital/)
-
 ItsVital is a monitor and controller designed for EMS and medical simulation. This application is a vital tool for instructors to remotely control and monitor medical students, EMTs, paramedics, and nurses during training sessions.
+
+![GitHub License](https://img.shields.io/github/license/JaysPancake/ItsVital?style=for-the-badge) ![Discord](https://img.shields.io/discord/1155608617370791979?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/JaysPancake/ItsVital?style=for-the-badge)
+
+
 
 ## Features
 
@@ -17,6 +19,7 @@ ItsVital is a monitor and controller designed for EMS and medical simulation. Th
 
 - Web browser (latest version recommended)
 - Internet connection
+- Node.js installed on your machine
 
 ### Installation
 
@@ -25,13 +28,30 @@ ItsVital is a monitor and controller designed for EMS and medical simulation. Th
    git clone https://github.com/JaysPancake/ItsVital.git
    ```
 
-### Deployed Version
+2. Navigate to the project directory:
+   ```bash
+   cd ItsVital
+   ```
 
-You can access the deployed version of the application [here](https://jayspancake.github.io/ItsVital/).
+3. Install the dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Run the server:
+   ```bash
+   node server.js
+   ```
+
+## Deployed Version
+
+You can access the deployed version of the application [here](https://github.com/JaysPancake/ItsVital?tab=readme-ov-file).
+
+Note: Deployed version has no server instance running at this time.
 
 ## License
 
-This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](https://github.com/JaysPancake/ItsVital?tab=readme-ov-file) file for details.
 
 ## About
 
