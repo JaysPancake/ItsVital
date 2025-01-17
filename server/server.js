@@ -18,14 +18,17 @@ app.get('/create-session', (req, res) => {
     res.redirect(`/session/${sessionCode}`); // Redirect to the session's URL
 });
 
+const path = require('path');
 app.get('/session/:code', (req, res) => {
     const sessionCode = req.params.code;
     if (sessions[sessionCode]) {
-        res.sendFile(__dirname + '/../public/session.html'); // Serve the session page if valid code
+        // Use path.join to resolve the absolute path
+        res.sendFile(path.join(__dirname, '../public/session.html'));
     } else {
-        res.status(404).send('Session not found'); // Handle invalid session codes
+        res.status(404).send('Session not found');
     }
 });
+
 
 io.on('connection', (socket) => {
     console.log('A user connected');
