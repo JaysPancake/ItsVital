@@ -3,27 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ItsVital | Monitor Simulator</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>ItsVital | Create a Session</title>
 </head>
 <body>
-    <h1>Vital Monitor Simulator</h1>
-    <div id="monitor">
-        <p>Heart Rate: <span id="heartRate">--</span> bpm</p>
-        <p>Blood Pressure: <span id="bloodPressure">--</span> mmHg</p>
-        <p>Oxygen Saturation: <span id="oxygenSaturation">--</span>%</p>
-    </div>
-    <div id="controls">
-        <h2>Update Vitals</h2>
-        <label for="heartRateInput">Heart Rate:</label>
-        <input id="heartRateInput" type="number" placeholder="Enter Heart Rate">
-        <label for="bloodPressureInput">Blood Pressure:</label>
-        <input id="bloodPressureInput" type="text" placeholder="Enter BP (e.g., 120/80)">
-        <label for="oxygenSaturationInput">Oxygen Saturation:</label>
-        <input id="oxygenSaturationInput" type="number" placeholder="Enter O2 Sat">
-        <button id="updateButton">Update Vitals</button>
-    </div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="js/app.js"></script>
+    <h1>Welcome to ItsVital</h1>
+    <button id="create-session">Create a New Session</button>
+
+    <script>
+        document.getElementById('create-session').addEventListener('click', () => {
+            window.location.href = '/create-session'; // Redirect to the create-session route
+        });
+    </script>
 </body>
 </html>

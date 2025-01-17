@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="monitor">
+        <!-- Monitor UI goes here -->
+        <h1>Monitor for Session: <span id="session-code"></span></h1>
+        <div id="vitals">Vitals data will appear here.</div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const sessionCode = window.location.pathname.split('/').pop(); // Get session code from URL
+        document.getElementById('session-code').textContent = sessionCode;
+
+        socket.emit('joinSession', sessionCode); // Join the session using the session code
+
+        socket.on('vitalsUpdated', (data) => {
+            document.getElementById('vitals').textContent = `Heart Rate: ${data.heartRate} BPM`; // Example vitals
+        });
+
+        // Example function to send updated vitals
+        function updateVitals(vitals) {
+            socket.emit('updateVitals', { sessionCode, vitals });
+        }
+
+        // For testing, you can simulate an update
+        setTimeout(() => {
+            updateVitals({ heartRate: 120 });
+        }, 5000);
+    </script>
+</body>
+</html>
