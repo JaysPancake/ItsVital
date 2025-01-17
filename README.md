@@ -2,7 +2,7 @@
 
 ItsVital is a monitor and controller designed for EMS and medical simulation. This application is a vital tool for instructors to remotely control and monitor medical students, EMTs, paramedics, and nurses during training sessions.
 
-![GitHub License](https://img.shields.io/github/license/JaysPancake/ItsVital?style=for-the-badge) ![Discord](https://img.shields.io/discord/1155608617370791979?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/JaysPancake/ItsVital?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/JaysPancake/ItsVital?style=for-the-badge) [![Discord](https://img.shields.io/discord/1155608617370791979?style=for-the-badge)](https://discord.com/invite/KQaZb2TbQK) ![GitHub last commit](https://img.shields.io/github/last-commit/JaysPancake/ItsVital?style=for-the-badge)
 
 
 
