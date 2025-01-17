@@ -21,7 +21,7 @@ app.get('/create-session', (req, res) => {
 app.get('/session/:code', (req, res) => {
     const sessionCode = req.params.code;
     if (sessions[sessionCode]) {
-        res.sendFile(__dirname + 'session.html'); // Serve the session page if valid code
+        res.sendFile(__dirname + '../public/session.html'); // Serve the session page if valid code
     } else {
         res.status(404).send('Session not found'); // Handle invalid session codes
     }
