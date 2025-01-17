@@ -9,9 +9,43 @@
     <h1>Welcome to ItsVital</h1>
     <button id="create-session">Create a New Session</button>
 
+    <div id="joinSession">
+        <h2>Join a Session</h2>
+        <label for="sessionCode">Session Code:</label>
+        <input type="text" id="sessionCode" placeholder="Enter session code">
+        <button id="joinSessionButton">Join Session</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
     <script>
+        // Handle creating a session
         document.getElementById('create-session').addEventListener('click', () => {
             window.location.href = '/create-session'; // Redirect to the create-session route
+        });
+
+        // Handle joining a session
+        document.getElementById('joinSessionButton').addEventListener('click', () => {
+            const sessionCode = document.getElementById('sessionCode').value;
+            
+            if (sessionCode.trim() === '') {
+                alert('Please enter a session code');
+                return;
+            }
+
+            // Emit the session code to the server to join the session
+            socket.emit('joinSession', sessionCode);
+
+            // Listen for the server response
+            socket.on('sessionJoined', (data) => {
+                alert(data.message);
+                // Redirect to the session page upon successful join
+                window.location.href = `/session/${sessionCode}`;
+            });
+
+            socket.on('error', (data) => {
+                alert(data.message); // Show error message if session doesn't exist
+            });
         });
     </script>
 </body>
