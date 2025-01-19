@@ -11,11 +11,13 @@
         <!-- Monitor UI goes here -->
         <h1>Monitor for Session: <span id="session-code"></span></h1>
         <div id="vitals">Vitals data will appear here.</div>
+        <button id="leave-session" class="btn btn-secondary">Leave Session</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        const leaveSessionButton = document.getElementById('leave-session');
         const sessionCode = window.location.pathname.split('/').pop(); // Get session code from URL
         document.getElementById('session-code').textContent = sessionCode;
 
@@ -34,6 +36,23 @@
         setTimeout(() => {
             updateVitals({ heartRate: 120 });
         }, 5000);
+
+        leaveSessionButton.addEventListener('click', () => {
+            // Emit the event to leave the session
+            socket.emit('leaveSession', sessionCode);
+        });
+
+        // Listen for the confirmation and redirect
+        socket.on('leftSession', () => {
+            alert('You have left the session.');
+            window.location.href = '/'; // Redirect to the index page
+        });
+
+        // Listen for the session ended event (in case the controller ends the session)
+        socket.on('sessionEnded', () => {
+            alert('Session has ended.');
+            window.location.href = '/'; // Redirect to the index page
+        });
     </script>
 </body>
 </html>

@@ -22,10 +22,12 @@
         <input type="number" id="oxygenSaturationInput" placeholder="Enter oxygen saturation">
     </div>
     <button id="updateButton">Update Vitals</button>
+    <button id="end-session" class="btn btn-danger">End Session</button>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        const endSessionButton = document.getElementById('end-session');
         const sessionCode = window.location.pathname.split('/').pop();
         document.getElementById('session-code').textContent = sessionCode;
 
@@ -36,6 +38,17 @@
                 oxygenSaturation: document.getElementById('oxygenSaturationInput').value || '--',
             };
             socket.emit('updateVitals', { sessionCode, vitals: updatedVitals });
+        });
+
+        endSessionButton.addEventListener('click', () => {
+            // Emit the event to end the session
+            socket.emit('endSession', sessionCode);
+        });
+
+        // Listen for the session ended event and redirect
+        socket.on('sessionEnded', () => {
+            alert('Session has ended.');
+            window.location.href = '/'; // Redirect to the index page
         });
     </script>
 </body>

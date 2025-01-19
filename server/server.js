@@ -61,6 +61,31 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Handle leaving a session
+    socket.on('leaveSession', (sessionCode) => {
+        socket.leave(sessionCode);
+        const userIndex = sessions[sessionCode]?.users.indexOf(socket.id);
+        if (userIndex !== -1) {
+            sessions[sessionCode].users.splice(userIndex, 1);
+            console.log(`User left session: ${sessionCode}`);
+        }
+
+        // Notify the user that they've left
+        socket.emit('leftSession', { message: 'You have left the session.' });
+    });
+
+    // Handle ending a session
+    socket.on('endSession', (sessionCode) => {
+        if (sessions[sessionCode]) {
+            // Notify all users in the session that it has ended
+            io.to(sessionCode).emit('sessionEnded', { message: 'The session has ended.' });
+
+            // Delete the session
+            delete sessions[sessionCode];
+            console.log(`Session ended: ${sessionCode}`);
+        }
+    });
+
     // Event to update vitals in a session
     socket.on('updateVitals', (data) => {
         const { sessionCode, vitals } = data;
@@ -72,12 +97,12 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
-        // Optionally remove user from session on disconnect
-        for (let sessionCode in sessions) {
+        // Remove user from sessions
+        for (const sessionCode in sessions) {
             const userIndex = sessions[sessionCode].users.indexOf(socket.id);
-            if (userIndex > -1) {
-                sessions[sessionCode].users.splice(userIndex, 1); // Remove the user from the session's user list
-                console.log(`User left session: ${sessionCode}`);
+            if (userIndex !== -1) {
+                sessions[sessionCode].users.splice(userIndex, 1);
+                console.log(`User disconnected from session: ${sessionCode}`);
             }
         }
     });
