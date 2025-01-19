@@ -12,10 +12,10 @@
         <div class="row">
             <div class="col-md-12">
                 <h3 class="text-center">
-                    h3. Lorem ipsum dolor sit amet.
+                    ItsVital: Session <span id="session-code"></span>
                 </h3> 
-                <button type="button" class="btn btn-lg btn-outline-danger btn-block">
-                    Button
+                <button id="leave-session" type="button" class="btn btn-lg btn-outline-danger btn-block">
+                    Leave Session
                 </button>
             </div>
         </div>
@@ -23,16 +23,21 @@
             <div class="col-md-12">
                 <div class="row">
                     <div class="col-md-3">
+                        Date
                     </div>
                     <div class="col-md-3">
+                        Time
                     </div>
                     <div class="col-md-3">
+                        Size
                     </div>
                     <div class="col-md-3">
                         <div class="row">
                             <div class="col-md-6">
+                                Battery
                             </div>
                             <div class="col-md-6">
+                                Time
                             </div>
                         </div>
                     </div>
@@ -41,26 +46,31 @@
         </div>
         <div class="row">
             <div class="col-md-1">
+                BTNS
             </div>
             <div class="col-md-11">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-12">
+                                HR - BPM
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
+                                80
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-12">
+                                SPO2 - %
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
+                                100
                             </div>
                         </div>
                     </div>
@@ -69,14 +79,17 @@
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-12">
+                                NIBP - mmHg
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row">
                                     <div class="col-md-6">
+                                        000/00
                                     </div>
                                     <div class="col-md-6">
+                                        MAP
                                     </div>
                                 </div>
                             </div>
@@ -85,10 +98,12 @@
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-12">
+                                ETCO2 mmHg
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
+                                38
                             </div>
                         </div>
                     </div>
@@ -97,7 +112,6 @@
         </div>
     </div>
     <!-- OLD -->
-    <h1>Monitor for Session: <span id="session-code"></span></h1>
     <div class="container" id="monitor">
         <div class="row">
             <div class="col-md-3 vital-box">
@@ -118,7 +132,6 @@
             </div>
         </div>
     </div>
-    <button id="leave-session" class="btn btn-secondary">Leave Session</button>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
