@@ -13,10 +13,20 @@ const sessions = {}; // Example session storage
 
 // Route to create a session
 app.get('/create-session', (req, res) => {
-    // Generate a random session code
     const sessionCode = Math.random().toString(36).substring(2, 8);
-    sessions[sessionCode] = { users: [] }; // Store session
-    res.redirect(`/session/${sessionCode}`); // Redirect to the session's page
+    sessions[sessionCode] = { users: [] };
+    // Redirect the creator to the controls page
+    res.redirect(`/controls/${sessionCode}`);
+});
+
+// Serve the controls page
+app.get('/controls/:code', (req, res) => {
+    const sessionCode = req.params.code;
+    if (sessions[sessionCode]) {
+        res.sendFile(path.join(__dirname, '../public/controls.html'));
+    } else {
+        res.status(404).send('Session not found');
+    }
 });
 
 // Route to serve the session page

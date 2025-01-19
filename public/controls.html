@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controls</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <h1>Session Controls for: <span id="session-code"></span></h1>
+
+    <div>
+        <label for="heartRateInput">Heart Rate:</label>
+        <input type="number" id="heartRateInput" placeholder="Enter heart rate">
+    </div>
+    <div>
+        <label for="bloodPressureInput">Blood Pressure:</label>
+        <input type="text" id="bloodPressureInput" placeholder="Enter blood pressure">
+    </div>
+    <div>
+        <label for="oxygenSaturationInput">Oxygen Saturation:</label>
+        <input type="number" id="oxygenSaturationInput" placeholder="Enter oxygen saturation">
+    </div>
+    <button id="updateButton">Update Vitals</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const sessionCode = window.location.pathname.split('/').pop();
+        document.getElementById('session-code').textContent = sessionCode;
+
+        document.getElementById('updateButton').addEventListener('click', () => {
+            const updatedVitals = {
+                heartRate: document.getElementById('heartRateInput').value || '--',
+                bloodPressure: document.getElementById('bloodPressureInput').value || '--',
+                oxygenSaturation: document.getElementById('oxygenSaturationInput').value || '--',
+            };
+            socket.emit('updateVitals', { sessionCode, vitals: updatedVitals });
+        });
+    </script>
+</body>
+</html>
