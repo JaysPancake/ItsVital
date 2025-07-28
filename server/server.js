@@ -63,15 +63,22 @@ io.on('connection', (socket) => {
 
     // Handle leaving a session
     socket.on('leaveSession', (sessionCode) => {
-        socket.leave(sessionCode);
-        const userIndex = sessions[sessionCode]?.users.indexOf(socket.id);
-        if (userIndex !== -1) {
-            sessions[sessionCode].users.splice(userIndex, 1);
-            console.log(`User left session: ${sessionCode}`);
-        }
+        // Verify the session exists before performing any operations
+        if (sessions[sessionCode]) {
+            socket.leave(sessionCode);
+            const userIndex = sessions[sessionCode].users.indexOf(socket.id);
+            if (userIndex !== -1) {
+                sessions[sessionCode].users.splice(userIndex, 1);
+                console.log(`User left session: ${sessionCode}`);
+            }
 
-        // Notify the user that they've left
-        socket.emit('leftSession', { message: 'You have left the session.' });
+            // Notify the user that they've left
+            socket.emit('leftSession', { message: 'You have left the session.' });
+        } else {
+            // Log and inform the user when attempting to leave a session that doesn't exist
+            console.warn(`User attempted to leave nonexistent session: ${sessionCode}`);
+            socket.emit('error', { message: 'Session not found' });
+        }
     });
 
     // Handle ending a session
