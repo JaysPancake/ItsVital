@@ -6,8 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Serve static files from 'public' directory
-app.use(express.static('public'));
+// Serve static files from the public directory relative to this file
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Explicitly serve the index page for the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // Store active sessions in memory
 const sessions = {}; // Example session storage
