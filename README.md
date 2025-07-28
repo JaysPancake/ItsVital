@@ -40,7 +40,7 @@ ItsVital is a monitor and controller designed for EMS and medical simulation. Th
 
 4. Run the server:
    ```bash
-   node server.js
+   node server/server.js
    ```
 
 ## Deployed Version
