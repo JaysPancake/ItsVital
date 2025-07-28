@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -30,7 +31,6 @@ app.get('/controls/:code', (req, res) => {
 });
 
 // Route to serve the session page
-const path = require('path');
 app.get('/session/:code', (req, res) => {
     const sessionCode = req.params.code;
     if (sessions[sessionCode]) {
