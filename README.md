@@ -36,25 +36,25 @@ No installs. No proprietary equipment.
 
 ---
 
-## 🎯 Features (Planned / In Progress)
+## 🎯 Features (💡 Planned / 🚧 In Progress / ⭐ Complete)
 
-### Core (v0.1)
+### Core (v0.0.1)
 - Live vital signs monitoring:
-  - Heart rate
-  - SpO₂
-  - Respiratory rate
-  - Blood pressure (NIBP)
-  - ETCO₂
+  - 💡 Heart rate
+  - 💡 SpO₂
+  - 💡 Respiratory rate
+  - 💡 Blood pressure (NIBP)
+  - 💡 ETCO₂
 - Waveforms:
-  - ECG
-  - Pleth
-  - Capnography
-  - 12 Leads
-- Instructor control panel
-- Real-time synchronization (WebSockets)
-- Session join codes
-- Fullscreen monitor display
-- Basic alarm system
+  - 💡 ECG
+  - 💡 Pleth
+  - 💡 Capnography
+  - 💡 12 Leads
+- 💡 Instructor control panel
+- 💡 Real-time synchronization (WebSockets)
+- 💡 Session join codes
+- 💡 Fullscreen monitor display
+- 💡 Basic alarm system
 
 ### Coming Soon
 - Scenario system (JSON-based cases)
