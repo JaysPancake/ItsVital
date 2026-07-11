@@ -2,7 +2,7 @@
 
 **ItsVital** is a free and open-source, browser-based medical simulation platform for EMS, nursing, respiratory, and medical education.
 
-Its mission is to provide a capable, accessible alternative to expensive commercial simulation systems—such as iSimulate—so that smaller, rural, volunteer, lower-income, and otherwise under-resourced agencies can provide high-quality medical simulation training.
+Its mission is to provide a capable, accessible alternative to expensive commercial simulation systems so that smaller, rural, volunteer, lower-income, and otherwise under-resourced agencies can provide high-quality medical simulation training.
 
 ItsVital is intended to become a complete, practical simulator that educators can use without purchasing proprietary monitor hardware or costly software licenses.
 
@@ -10,7 +10,7 @@ ItsVital is intended to become a complete, practical simulator that educators ca
 > ItsVital is a training and simulation tool only. It is not a medical device and must not be used for real patient monitoring, diagnosis, treatment, or clinical decision-making.
 
 > [!NOTE]
-> ItsVital is an independent project and is not affiliated with, endorsed by, or sponsored by iSimulate or any medical-device manufacturer.
+> ItsVital is an independent project and is not affiliated with, endorsed by, or sponsored by any medical-device manufacturer.
 
 ## Project status
 
