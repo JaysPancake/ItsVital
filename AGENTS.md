@@ -21,6 +21,10 @@ All implementation decisions should support these priorities, in order:
 
 Do not copy proprietary monitor layouts, logos, alarm sounds, icons, graphics, or other protected assets. The interface may be clinically familiar, but it should remain an original, manufacturer-neutral design.
 
+## Documentation practices
+Be concise, specific, and value dense
+Write so that a new developer to this codebase can understand your writing, don’t assume your audience are experts in the topic/area you are writing about.
+
 ## Current technical direction
 
 Use the following stack unless an issue or maintainer instruction explicitly changes it:
