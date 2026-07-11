@@ -41,6 +41,18 @@ Use the following stack unless an issue or maintainer instruction explicitly cha
 
 Do not introduce Angular, Flutter, React Native, Next.js, NestJS, a second package manager, or another major framework without an explicit architectural decision.
 
+### Use Canvas 2D as the default waveform renderer.
+
+Keep waveform generation independent from the rendering API. Rendering
+implementations must conform to a shared renderer interface so that a WebGL
+or other GPU-backed renderer can be introduced later without rewriting the
+physiology or waveform-generation logic.
+
+Do not introduce WebGL based only on anticipated performance needs. Profile
+the Canvas 2D implementation on representative phones, tablets, laptops, and
+projectors first. Consider WebGL only when measured performance remains
+insufficient after reasonable Canvas optimizations.
+
 ## Target repository structure
 
 The initial structure should remain small:
