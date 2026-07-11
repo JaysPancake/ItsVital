@@ -1,6 +1,6 @@
 {
   "name": "itsvital",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "description": "Browser-based patient-monitor simulation for education and training.",
@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "pnpm build && playwright test"
+    "test:e2e": "pnpm build && node e2e/run-e2e.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

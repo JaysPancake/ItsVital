@@ -14,9 +14,9 @@ ItsVital is intended to become a complete, practical simulator that educators ca
 
 ## Project status
 
-**Status: early development / pre-alpha**
+**Status: v0.0.1 pre-alpha**
 
-The repository is currently being scaffolded. There is not yet a stable release or a complete working monitor. Features listed in the roadmap are plans, not promises of current functionality.
+The first functional vertical slice is available: an instructor can create a temporary session, a monitor can join from another browser context, vital sign changes synchronize in real time, and a monitor can reconnect to recover the current snapshot. The project remains pre-alpha and is not yet a complete working monitor.
 
 Feature status is described as:
 
@@ -74,7 +74,7 @@ The server is authoritative for active session state. Clients send validated com
 
 The first milestone is intentionally narrow. The priority is proving a reliable two-browser instructor-to-monitor workflow before adding broad clinical features.
 
-### Planned for v0.0.1
+### Complete in v0.0.1
 
 - Temporary session creation
 - Short monitor join codes
@@ -268,7 +268,7 @@ pnpm dev
 - Web application: `http://localhost:5173`
 - Server health endpoint: `http://localhost:3001/health`
 
-The current interface is an initial scaffold. Instructor-to-monitor synchronization remains planned for v0.0.1.
+The current interface supports the v0.0.1 instructor-to-monitor workflow. It remains a narrow pre-alpha slice, not a complete simulation product.
 
 ### Available commands
 
@@ -314,7 +314,7 @@ pnpm exec playwright test --ui
 pnpm exec playwright test --headed --debug
 ```
 
-HTML test reports are written to `playwright-report/`. Traces and failure artifacts are written to `test-results/`; both directories are ignored by Git.
+Playwright traces and failure artifacts are written to `test-results/`, which is ignored by Git.
 
 ### Debugging
 
