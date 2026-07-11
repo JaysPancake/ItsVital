@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateSinusEcgSamples, sampleSinusEcg } from "./index";
+import { generateSinusEcgSamples, sampleSinusEcg, sampleSinusEcgEnvelope } from "./index";
 
 describe("waveforms package", () => {
   it("generates finite sinus ECG samples", () => {
@@ -20,5 +20,28 @@ describe("waveforms package", () => {
     const sample = sampleSinusEcg({ heartRate: Number.NaN, timeSeconds: Number.POSITIVE_INFINITY });
 
     expect(Number.isFinite(sample)).toBe(true);
+  });
+
+  it("captures stable high-rate QRS peaks across adjacent render offsets", () => {
+    const heartRate = 180;
+    const beatDurationSeconds = 60 / heartRate;
+    const qrsPeakSeconds = beatDurationSeconds * 0.4;
+    const pixelDurationSeconds = 4 / 900;
+    const firstColumn = sampleSinusEcgEnvelope({
+      heartRate,
+      startTimeSeconds: qrsPeakSeconds - pixelDurationSeconds / 2,
+      durationSeconds: pixelDurationSeconds,
+      sampleCount: 12,
+    });
+    const offsetColumn = sampleSinusEcgEnvelope({
+      heartRate,
+      startTimeSeconds: qrsPeakSeconds - pixelDurationSeconds / 2 + pixelDurationSeconds / 3,
+      durationSeconds: pixelDurationSeconds,
+      sampleCount: 12,
+    });
+
+    expect(firstColumn.max).toBeGreaterThan(0.9);
+    expect(offsetColumn.max).toBeGreaterThan(0.9);
+    expect(Math.abs(firstColumn.max - offsetColumn.max)).toBeLessThan(0.08);
   });
 });

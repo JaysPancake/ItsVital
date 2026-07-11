@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { sampleSinusEcg } from "@itsvital/waveforms";
+import { sampleSinusEcgEnvelope } from "@itsvital/waveforms";
 
 interface WaveformCanvasProps {
   heartRate: number;
@@ -69,17 +69,26 @@ export function WaveformCanvas({ heartRate }: WaveformCanvasProps) {
 
       const elapsedSeconds = (performance.now() - startedAt) / 1000;
       const secondsAcrossCanvas = 4;
+      const secondsPerPixel = secondsAcrossCanvas / width;
 
       for (let x = 0; x < width; x += 1) {
-        const timeSeconds = elapsedSeconds - secondsAcrossCanvas + (x / width) * secondsAcrossCanvas;
-        const sample = sampleSinusEcg({ heartRate: heartRateRef.current, timeSeconds });
-        const y = height * 0.55 - sample * height * 0.32;
+        const timeSeconds = elapsedSeconds - secondsAcrossCanvas + x * secondsPerPixel;
+        const envelope = sampleSinusEcgEnvelope({
+          heartRate: heartRateRef.current,
+          startTimeSeconds: timeSeconds,
+          durationSeconds: secondsPerPixel,
+          sampleCount: 10,
+        });
+        const minY = height * 0.55 - envelope.min * height * 0.32;
+        const maxY = height * 0.55 - envelope.max * height * 0.32;
 
         if (x === 0) {
-          context.moveTo(x, y);
+          context.moveTo(x, minY);
         } else {
-          context.lineTo(x, y);
+          context.lineTo(x, minY);
         }
+
+        context.lineTo(x, maxY);
       }
 
       context.stroke();

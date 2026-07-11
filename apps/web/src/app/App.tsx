@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent } from "react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router";
 import {
   type BloodPressure,
@@ -14,8 +14,6 @@ import { getSocket } from "../infrastructure/socket";
 
 const instructorTokenKey = (sessionId: string) => `itsvital.instructor.${sessionId}`;
 const instructorJoinCodeKey = (sessionId: string) => `itsvital.joinCode.${sessionId}`;
-
-const parseNumber = (event: ChangeEvent<HTMLInputElement>) => Number(event.currentTarget.value);
 
 function Home() {
   return (
@@ -189,7 +187,11 @@ function InstructorSession() {
                 {joinCode ?? "Unavailable"}
               </strong>
             </div>
-            {joinCode ? <Link to={`/monitor/${joinCode}`}>Open local monitor view</Link> : null}
+            {joinCode ? (
+              <Link to={`/monitor/${joinCode}`} target="_blank" rel="noreferrer">
+                Open local monitor view
+              </Link>
+            ) : null}
           </section>
 
           <section className="control-grid" aria-label="Vital sign controls">
@@ -200,7 +202,7 @@ function InstructorSession() {
               min={20}
               max={250}
               testId="heart-rate-input"
-              onChange={(value) => applyVitalsPatch({ heartRate: value })}
+              onCommit={(value) => applyVitalsPatch({ heartRate: value })}
             />
             <NumberControl
               label="SpO2"
@@ -208,7 +210,7 @@ function InstructorSession() {
               value={snapshot.patient.spo2}
               min={0}
               max={100}
-              onChange={(value) => applyVitalsPatch({ spo2: value })}
+              onCommit={(value) => applyVitalsPatch({ spo2: value })}
             />
             <NumberControl
               label="Respiratory rate"
@@ -216,7 +218,7 @@ function InstructorSession() {
               value={snapshot.patient.respiratoryRate}
               min={0}
               max={80}
-              onChange={(value) => applyVitalsPatch({ respiratoryRate: value })}
+              onCommit={(value) => applyVitalsPatch({ respiratoryRate: value })}
             />
             <NumberControl
               label="EtCO2"
@@ -224,7 +226,7 @@ function InstructorSession() {
               value={snapshot.patient.etco2}
               min={0}
               max={100}
-              onChange={(value) => applyVitalsPatch({ etco2: value })}
+              onCommit={(value) => applyVitalsPatch({ etco2: value })}
             />
             <NumberControl
               label="Systolic BP"
@@ -232,7 +234,7 @@ function InstructorSession() {
               value={snapshot.patient.bloodPressure.systolic}
               min={40}
               max={260}
-              onChange={(value) =>
+              onCommit={(value) =>
                 applyBloodPressure({ ...snapshot.patient.bloodPressure, systolic: value })
               }
             />
@@ -242,7 +244,7 @@ function InstructorSession() {
               value={snapshot.patient.bloodPressure.diastolic}
               min={20}
               max={180}
-              onChange={(value) =>
+              onCommit={(value) =>
                 applyBloodPressure({ ...snapshot.patient.bloodPressure, diastolic: value })
               }
             />
@@ -266,13 +268,61 @@ interface NumberControlProps {
   min: number;
   max: number;
   testId?: string;
-  onChange(value: number): void;
+  onCommit(value: number): void;
 }
 
-function NumberControl({ label, unit, value, min, max, testId, onChange }: NumberControlProps) {
+function NumberControl({ label, unit, value, min, max, testId, onCommit }: NumberControlProps) {
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
+  const [draft, setDraft] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const displayedValue = isEditing ? draft : String(value);
+
+  const reset = () => {
+    setDraft(String(value));
+    setIsEditing(false);
+    setError(null);
+  };
+
+  const commit = (event?: FocusEvent<HTMLInputElement>) => {
+    const nextValue = Number(draft);
+
+    if (draft.trim() === "" || !Number.isInteger(nextValue)) {
+      setError(`${label} must be a whole number.`);
+      event?.currentTarget.focus();
+      return;
+    }
+
+    if (nextValue < min || nextValue > max) {
+      setError(`${label} must be between ${min} and ${max}.`);
+      event?.currentTarget.focus();
+      return;
+    }
+
+    setIsEditing(false);
+    setError(null);
+
+    if (nextValue !== value) {
+      onCommit(nextValue);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commit();
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      reset();
+    }
+  };
+
   return (
     <label className="number-control">
-      <span>
+      <span id={inputId}>
         {label} <small>{unit}</small>
       </span>
       <input
@@ -281,9 +331,28 @@ function NumberControl({ label, unit, value, min, max, testId, onChange }: Numbe
         inputMode="numeric"
         min={min}
         max={max}
-        value={value}
-        onChange={(event) => onChange(parseNumber(event))}
+        value={displayedValue}
+        aria-labelledby={inputId}
+        aria-invalid={error ? "true" : "false"}
+        aria-describedby={error ? errorId : undefined}
+        onFocus={() => {
+          setDraft(String(value));
+          setIsEditing(true);
+          setError(null);
+        }}
+        onChange={(event) => {
+          setDraft(event.currentTarget.value);
+          setIsEditing(true);
+          setError(null);
+        }}
+        onBlur={commit}
+        onKeyDown={handleKeyDown}
       />
+      {error ? (
+        <small id={errorId} className="control-error">
+          {error}
+        </small>
+      ) : null}
     </label>
   );
 }
@@ -399,6 +468,8 @@ function MonitorSession() {
               label="NIBP"
               value={`${snapshot.patient.bloodPressure.systolic}/${snapshot.patient.bloodPressure.diastolic}`}
               unit="mmHg"
+              compact
+              testId="monitor-blood-pressure"
             />
             <VitalDisplay label="EtCO2" value={snapshot.patient.etco2} unit="mmHg" />
           </section>
@@ -419,14 +490,16 @@ function VitalDisplay({
   value,
   unit,
   testId,
+  compact = false,
 }: {
   label: string;
   value: number | string;
   unit: string;
   testId?: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="vital">
+    <div className={compact ? "vital vital-compact" : "vital"}>
       <span>{label}</span>
       <strong data-testid={testId}>{value}</strong>
       <small>{unit}</small>

@@ -164,6 +164,11 @@ nav a {
   color: #526168;
 }
 
+.control-error {
+  color: #9d2f21;
+  font-weight: 700;
+}
+
 .monitor-shell {
   width: min(82rem, 100%);
   color: #e9fff4;
@@ -193,6 +198,7 @@ nav a {
   border: 1px solid #1b4e39;
   border-radius: 6px;
   background: #0b1b17;
+  min-width: 0;
 }
 
 .vital strong {
@@ -202,6 +208,12 @@ nav a {
   font-size: clamp(2.6rem, 9vw, 5rem);
   line-height: 0.95;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.vital-compact strong {
+  font-size: clamp(2.1rem, 6vw, 3.8rem);
+  line-height: 1;
 }
 
 .metadata {

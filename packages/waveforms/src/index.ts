@@ -8,6 +8,13 @@ export interface SinusEcgSampleOptions {
   timeSeconds: number;
 }
 
+export interface SinusEcgEnvelopeOptions {
+  heartRate: number;
+  startTimeSeconds: number;
+  durationSeconds: number;
+  sampleCount?: number;
+}
+
 const clampHeartRate = (heartRate: number) => Math.min(Math.max(heartRate, 20), 250);
 
 const gaussian = (phase: number, center: number, width: number, amplitude: number) => {
@@ -47,4 +54,30 @@ export function generateSinusEcgSamples(
       timeSeconds: startTimeSeconds + index / safeSampleRate,
     }),
   );
+}
+
+export function sampleSinusEcgEnvelope({
+  heartRate,
+  startTimeSeconds,
+  durationSeconds,
+  sampleCount = 8,
+}: SinusEcgEnvelopeOptions): { min: number; max: number } {
+  const safeDurationSeconds =
+    Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : 1 / 250;
+  const safeSampleCount = Math.max(2, Math.floor(sampleCount));
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+
+  for (let index = 0; index < safeSampleCount; index += 1) {
+    const fraction = safeSampleCount === 1 ? 0 : index / (safeSampleCount - 1);
+    const sample = sampleSinusEcg({
+      heartRate,
+      timeSeconds: startTimeSeconds + safeDurationSeconds * fraction,
+    });
+
+    min = Math.min(min, sample);
+    max = Math.max(max, sample);
+  }
+
+  return { min, max };
 }
