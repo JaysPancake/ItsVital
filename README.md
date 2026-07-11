@@ -239,9 +239,22 @@ See [`AGENTS.md`](./AGENTS.md) for detailed repository-wide implementation instr
 
 ## Getting started
 
-The workspace has not yet been fully scaffolded, so installation and development commands may not work until the initial project setup is complete.
+### Prerequisites
 
-Once scaffolding is finished, the expected workflow will be:
+- Node.js 24 LTS
+- pnpm 11
+- Git
+
+The repository enforces Node 24 through `package.json` and `.npmrc`. Check your active tools before installing dependencies:
+
+```bash
+node --version
+pnpm --version
+```
+
+If pnpm is not installed, install it with the method recommended for your operating system in the [pnpm installation guide](https://pnpm.io/installation). Do not use npm or Yarn to install this workspace.
+
+### Install and run
 
 ```bash
 git clone https://github.com/JaysPancake/ItsVital.git
@@ -250,18 +263,83 @@ pnpm install
 pnpm dev
 ```
 
-Expected root commands:
+`pnpm dev` starts both development processes:
+
+- Web application: `http://localhost:5173`
+- Server health endpoint: `http://localhost:3001/health`
+
+The current interface is an initial scaffold. Instructor-to-monitor synchronization remains planned for v0.0.1.
+
+### Available commands
 
 ```bash
-pnpm dev
-pnpm build
+pnpm dev          # Start the web and server development processes
+pnpm build        # Build all packages and applications
+pnpm typecheck    # Type-check every workspace package
+pnpm lint         # Run ESLint across the repository
+pnpm test         # Run unit tests once with Vitest
+pnpm test:watch   # Run unit tests in watch mode
+pnpm test:e2e     # Build and run Playwright browser tests
+```
+
+### Testing
+
+Run the fast local checks while developing:
+
+```bash
 pnpm typecheck
 pnpm lint
 pnpm test
+```
+
+Run a single Vitest file or filter tests by name:
+
+```bash
+pnpm test packages/protocol/src/index.test.ts
+pnpm test --testNamePattern protocolVersion
+```
+
+Playwright requires its Chromium browser binary once per machine:
+
+```bash
+pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-The README will be updated as soon as those commands are implemented and verified.
+Use Playwright's interactive UI or headed browser when investigating an end-to-end failure:
+
+```bash
+pnpm build
+pnpm exec playwright test --ui
+pnpm exec playwright test --headed --debug
+```
+
+HTML test reports are written to `playwright-report/`. Traces and failure artifacts are written to `test-results/`; both directories are ignored by Git.
+
+### Debugging
+
+To focus on one process, run it by workspace name:
+
+```bash
+pnpm --filter @itsvital/web dev
+pnpm --filter @itsvital/server dev
+```
+
+The web application supports the React and browser developer tools available in your browser. Vite reports compile errors in both the terminal and its browser error overlay.
+
+For a debugger attached to the server, start its TypeScript entry point with Node's inspector:
+
+```bash
+pnpm --filter @itsvital/server exec node --inspect --import tsx src/index.ts
+```
+
+Then attach your editor or open `chrome://inspect` in a Chromium browser. Set `PORT` or `WEB_ORIGIN` when the defaults conflict with another local service. In PowerShell, for example:
+
+```powershell
+$env:PORT=3101
+$env:WEB_ORIGIN="http://localhost:5174"
+pnpm --filter @itsvital/server dev
+```
 
 ## Contributing
 

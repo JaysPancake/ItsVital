@@ -1,0 +1,64 @@
+:root {
+  color: #152027;
+  background: #f4f6f5;
+  font-family: system-ui, sans-serif;
+  font-synthesis: none;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  box-sizing: border-box;
+  width: min(42rem, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(2rem, 8vw, 6rem) 1.5rem;
+}
+
+h1 {
+  margin: 0.5rem 0;
+  font-size: clamp(2.5rem, 4rem, 5rem);
+  letter-spacing: 0;
+}
+
+p {
+  line-height: 1.6;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 2rem 0;
+}
+
+a {
+  color: #075f55;
+  font-weight: 700;
+}
+
+nav a {
+  padding: 0.8rem 1rem;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+}
+
+.status {
+  color: #526168;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.warning {
+  margin-top: 3rem;
+  padding-left: 1rem;
+  border-left: 4px solid #bd3a2b;
+  font-weight: 700;
+}
+
+a:focus-visible {
+  outline: 3px solid #e3a008;
+  outline-offset: 4px;
+}
