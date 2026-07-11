@@ -58,6 +58,7 @@ Planned changes:
 - Improve waveform labels, grid behavior, scaling, and responsive sizing.
 - Keep waveform generation framework-independent in `packages/waveforms`.
 - Add waveform tests for finite output, timing, and safe boundary handling.
+- Allow monitor to choose student/instrutor dependent states. (Whether the student must press an NIBP button, or activate on their end vitals, or if this is all managed and displayed by instructor.)
 
 Release criteria:
 
