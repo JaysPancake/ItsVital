@@ -43,12 +43,13 @@ No installs. No proprietary equipment.
   - Heart rate
   - SpO₂
   - Respiratory rate
-  - Blood pressure
+  - Blood pressure (NIBP)
   - ETCO₂
 - Waveforms:
   - ECG
   - Pleth
   - Capnography
+  - 12 Leads
 - Instructor control panel
 - Real-time synchronization (WebSockets)
 - Session join codes
