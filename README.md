@@ -1,11 +1,16 @@
 # ItsVital
 
-**ItsVital** is a free and open-source, browser-based patient-monitor simulation platform for EMS, nursing, respiratory, and medical education.
+**ItsVital** is a free and open-source, browser-based medical simulation platform for EMS, nursing, respiratory, and medical education.
 
-Its goal is simple: **turn ordinary devices into connected training monitors without requiring proprietary hardware or a native application.**
+Its mission is to provide a capable, accessible alternative to expensive commercial simulation systems—such as iSimulate—so that smaller, rural, volunteer, lower-income, and otherwise under-resourced agencies can provide high-quality medical simulation training.
+
+ItsVital is intended to become a complete, practical simulator that educators can use without purchasing proprietary monitor hardware or costly software licenses.
 
 > [!WARNING]
 > ItsVital is a training and simulation tool only. It is not a medical device and must not be used for real patient monitoring, diagnosis, treatment, or clinical decision-making.
+
+> [!NOTE]
+> ItsVital is an independent project and is not affiliated with, endorsed by, or sponsored by iSimulate or any medical-device manufacturer.
 
 ## Project status
 
@@ -21,18 +26,37 @@ Feature status is described as:
 
 ## Why ItsVital?
 
-Commercial simulation systems can be expensive, hardware-dependent, and difficult to deploy across classrooms or small training programs.
+High-quality medical simulation improves education, clinical decision-making, teamwork, communication, and readiness for uncommon or high-risk events. However, many commercial simulation systems are priced beyond the reach of smaller agencies, volunteer services, rural departments, community programs, and individual educators.
+
+ItsVital exists to reduce that access gap.
+
+The project is being designed to offer a realistic instructor-controlled patient-monitor experience using devices organizations may already own. It should be usable as a complete training product while remaining open for educators and developers to inspect, adapt, improve, and self-host.
 
 ItsVital is being designed to be:
 
-- **Browser-first** — use a modern browser on a tablet, laptop, phone, desktop, or projector
-- **Open source** — inspect, modify, self-host, and contribute to the software
-- **Instructor-controlled** — change simulated patient conditions in real time
-- **Device-agnostic** — no required proprietary monitor hardware
+- **Free and open source** — use, inspect, modify, self-host, and contribute to the software
+- **Browser-first** — run on a modern browser using a tablet, laptop, phone, desktop, or projector
+- **Instructor-controlled** — change simulated patient conditions and monitor behavior in real time
+- **Device-agnostic** — avoid required proprietary monitor hardware
+- **Practical for small agencies** — minimize setup, infrastructure, licensing, and deployment barriers
 - **Accessible** — support keyboard use, touch devices, visible alarm states, and alternatives to color-only cues
-- **Manufacturer-neutral** — clinically familiar without copying proprietary monitor interfaces or assets
+- **Manufacturer-neutral** — provide clinically familiar behavior without copying proprietary interfaces or assets
+- **Community-built** — combine development, clinical review, education experience, testing, and accessibility feedback
 
-The software itself is free and open source. Any future community-hosted service may have usage limits based on available funding and infrastructure.
+The software itself is free and open source. Any future community-hosted service may have usage limits based on available funding and infrastructure, while self-hosting should remain a supported long-term option.
+
+## Intended users
+
+ItsVital is intended for organizations and educators including:
+
+- EMS and fire agencies
+- Volunteer and rural services
+- Community colleges and training academies
+- Nursing, respiratory, and medical programs
+- Hospital education departments
+- Simulation centers
+- Independent instructors
+- Students practicing in supervised educational environments
 
 ## How it will work
 
@@ -112,17 +136,24 @@ The following are intentionally deferred:
 - Example fictional cases
 - Scenario validation and error reporting
 
-### Later possibilities
+### Long-term product direction
+
+ItsVital is intended to grow beyond a basic monitor display into a broader medical simulation platform. Potential capabilities include:
 
 - User accounts and organizations
+- Shared scenario libraries
 - Persistent storage adapters
 - Docker-based self-hosting
 - Community-hosted deployment
 - Progressive Web App support
 - Collaborative instructors
 - Twelve-lead acquisition and review
-- Debrief exports
-- Carefully scoped hardware integrations
+- Debrief timelines and exports
+- Additional monitor modes and clinical devices
+- Carefully scoped ventilator, CPR-feedback, manikin, or hardware integrations
+- Extensible interfaces for community-developed simulation modules
+
+These additions should support the primary goal of delivering a useful, affordable simulator—not turn the project into a framework that requires organizations to build their own product before they can train with it.
 
 ## Technical direction
 
@@ -191,6 +222,7 @@ A shared UI package will not be added until at least two real applications need 
 
 ## Architecture principles
 
+- The finished product should be usable by educators without requiring custom software development.
 - The server is the source of truth for active simulations.
 - A public join code never grants instructor permissions.
 - Every inbound payload is validated at runtime.
@@ -269,7 +301,9 @@ ItsVital should model educational monitor behavior without making diagnostic cla
 - Do not enter real patient information or protected health information.
 - Do not rely on simulated waveforms, values, alarms, or calculations for clinical decisions.
 - Do not copy manufacturer logos, layouts, alarm sounds, icons, screenshots, or proprietary graphics.
-- Do not imply regulatory clearance, medical-device status, or endorsement by a monitor manufacturer.
+- Do not imply regulatory clearance, medical-device status, affiliation, endorsement, or sponsorship by a monitor or simulation-system manufacturer.
+
+References to commercial products are descriptive comparisons only. Their names and trademarks belong to their respective owners.
 
 ## License
 
@@ -281,13 +315,17 @@ Educational scenarios and other non-code content may receive a separate content 
 
 ## Vision
 
-ItsVital aims to become an accessible, community-built platform for simulation-based education by making realistic instructor-controlled monitor experiences easier to create, deploy, study, and improve.
+ItsVital's vision is to make high-quality medical simulation available to educators and agencies that are currently priced out of commercial systems.
 
-The long-term goal is not to reproduce one commercial product. It is to build an open foundation that educators and developers can adapt to their own training environments.
+The project aims to become a free and open-source alternative to expensive products such as iSimulate and other proprietary medical simulation platforms. It should provide a polished, realistic, instructor-controlled training experience that can be deployed using ordinary devices and adapted to different educational environments.
+
+ItsVital is not intended to be only a software foundation or developer toolkit. The primary product should work for instructors and learners out of the box. Open architecture, self-hosting, and community extensibility exist to make that simulator more accessible, sustainable, and adaptable.
+
+Success means that a small agency, rural department, volunteer service, community program, or independent educator can conduct high-quality simulation without needing the budget of a large institution.
 
 ## Support the project
 
 - Star the repository
 - Open focused issues
-- Share the project with simulation educators
+- Share the project with simulation educators and smaller agencies
 - Contribute code, testing, clinical review, accessibility feedback, or documentation
