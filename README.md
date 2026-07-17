@@ -14,9 +14,9 @@ ItsVital is intended to become a complete, practical simulator that educators ca
 
 ## Project status
 
-**Status: v0.0.1 pre-alpha**
+**Status: v0.0.2 pre-alpha**
 
-The first functional vertical slice is available: an instructor can create a temporary session, a monitor can join from another browser context, vital sign changes synchronize in real time, and a monitor can reconnect to recover the current snapshot. The project remains pre-alpha and is not yet a complete working monitor.
+The monitor now renders stable ECG, pleth, and capnography waveforms with local display controls and instructor-managed or student-operated workflows. Real-time synchronization and reconnect recovery remain server-authoritative. The project remains pre-alpha and is not yet a complete clinical monitor simulation.
 
 Feature status is described as:
 
@@ -108,24 +108,42 @@ The following are intentionally deferred:
 - Native mobile applications
 - Ventilator, manikin, CPR-feedback, or proprietary hardware integrations
 
+## Monitor milestone: v0.0.2
+
+### Complete in v0.0.2
+
+- Stabilized sinus ECG and QRS rendering
+- Framework-independent ECG, pleth, and capnography generators
+- Reusable, high-DPI Canvas 2D waveform renderer
+- Responsive three-channel monitor display
+- Local sweep speed, grid, and per-channel gain controls
+- Instructor-selected instructor-managed or student-operated mode
+- Student channel activation and immediate NIBP value capture
+- Waveform boundary, timing, synchronization, and browser coverage
+
+The student NIBP control captures the current value immediately. Timed cuff cycles, result timestamps, and trend history are intentionally deferred.
+
 ## Planned roadmap
 
-### v0.0.2 — Basic monitor behavior
+### v0.0.3 — Basic alarms and instructor ergonomics
 
-- Pleth and capnography waveforms
-- Canvas-based waveform renderer
-- Sweep speed and display controls
-- Basic alarm thresholds
-- Alarm audio, mute state, and visible alarm messaging
+- Runtime-validated alarm thresholds
+- Visible alarm states
+- Original alarm audio and unmistakable mute state
+- Instructor alarm controls and faster vital adjustment
+- Improved connection and session messaging
 
-### v0.0.3 — Clinical controls
+### v0.0.4 — NIBP, trends, and event log
 
-- Additional rhythm selection
 - NIBP measurement cycles
-- Lead selection
-- Artifact controls
 - Numeric and waveform trends
 - Session event log
+
+### v0.0.5 — Rhythm and artifact expansion
+
+- Additional rhythm selection
+- Lead display state
+- Motion and disconnected-lead artifacts
 
 ### v0.1.0 — Scenario system
 
@@ -268,7 +286,7 @@ pnpm dev
 - Web application: `http://localhost:5173`
 - Server health endpoint: `http://localhost:3001/health`
 
-The current interface supports the v0.0.1 instructor-to-monitor workflow. It remains a narrow pre-alpha slice, not a complete simulation product.
+The current interface supports the v0.0.2 instructor-to-monitor workflow, three local waveform channels, display controls, and student-operated monitor setup. It remains a pre-alpha simulator, not a medical device or complete clinical monitor product.
 
 ### Available commands
 

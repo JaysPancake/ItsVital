@@ -1,14 +1,24 @@
-import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+} from "react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router";
 import {
   type BloodPressure,
   type CommandApplyResult,
   type InstructorCommand,
+  type MonitorControlMode,
   protocolVersion,
   type SessionCreateResult,
   type SessionJoinResult,
   type SessionSnapshot,
 } from "@itsvital/protocol";
+import { sampleCapnography, samplePleth, sampleSinusEcg } from "@itsvital/waveforms";
 import { WaveformCanvas } from "../components/WaveformCanvas";
 import { getSocket } from "../infrastructure/socket";
 
@@ -18,7 +28,7 @@ const instructorJoinCodeKey = (sessionId: string) => `itsvital.joinCode.${sessio
 function Home() {
   return (
     <main className="home">
-      <p className="status">v0.0.1</p>
+      <p className="status">v0.0.2</p>
       <h1>ItsVital</h1>
       <p>Browser-based patient-monitor simulation for education and training.</p>
       <nav aria-label="Simulation roles">
@@ -194,6 +204,41 @@ function InstructorSession() {
             ) : null}
           </section>
 
+          <fieldset className="mode-control">
+            <legend>Monitor control</legend>
+            <label>
+              <input
+                type="radio"
+                name="monitor-control-mode"
+                value="instructor-managed"
+                checked={snapshot.monitor.controlMode === "instructor-managed"}
+                onChange={() =>
+                  applyCommand({
+                    type: "monitor.controlMode.set",
+                    payload: { controlMode: "instructor-managed" },
+                  })
+                }
+              />
+              Instructor managed
+            </label>
+            <label>
+              <input
+                data-testid="student-operated-mode"
+                type="radio"
+                name="monitor-control-mode"
+                value="student-operated"
+                checked={snapshot.monitor.controlMode === "student-operated"}
+                onChange={() =>
+                  applyCommand({
+                    type: "monitor.controlMode.set",
+                    payload: { controlMode: "student-operated" },
+                  })
+                }
+              />
+              Student operated
+            </label>
+          </fieldset>
+
           <section className="control-grid" aria-label="Vital sign controls">
             <NumberControl
               label="Heart rate"
@@ -234,6 +279,7 @@ function InstructorSession() {
               value={snapshot.patient.bloodPressure.systolic}
               min={40}
               max={260}
+              testId="systolic-input"
               onCommit={(value) =>
                 applyBloodPressure({ ...snapshot.patient.bloodPressure, systolic: value })
               }
@@ -244,6 +290,7 @@ function InstructorSession() {
               value={snapshot.patient.bloodPressure.diastolic}
               min={20}
               max={180}
+              testId="diastolic-input"
               onCommit={(value) =>
                 applyBloodPressure({ ...snapshot.patient.bloodPressure, diastolic: value })
               }
@@ -387,11 +434,33 @@ function MonitorEntry() {
   );
 }
 
+type MonitorChannel = "ecg" | "pleth" | "capnography";
+type SweepSpeed = 12.5 | 25 | 50;
+type WaveformGain = 0.5 | 1 | 2;
+
+const initialStudentChannels: Record<MonitorChannel, boolean> = {
+  ecg: false,
+  pleth: false,
+  capnography: false,
+};
+
+const initialGains: Record<MonitorChannel, WaveformGain> = {
+  ecg: 1,
+  pleth: 1,
+  capnography: 1,
+};
+
 function MonitorSession() {
   const { sessionCode } = useParams();
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [sweepSpeed, setSweepSpeed] = useState<SweepSpeed>(25);
+  const [showGrid, setShowGrid] = useState(true);
+  const [gains, setGains] = useState(initialGains);
+  const [studentChannels, setStudentChannels] = useState(initialStudentChannels);
+  const [capturedBloodPressure, setCapturedBloodPressure] = useState<BloodPressure | null>(null);
+  const previousControlMode = useRef<MonitorControlMode | null>(null);
 
   useEffect(() => {
     if (!sessionCode) {
@@ -447,6 +516,53 @@ function MonitorSession() {
     };
   }, [sessionCode]);
 
+  useEffect(() => {
+    const controlMode = snapshot?.monitor.controlMode;
+
+    if (!controlMode) {
+      return;
+    }
+
+    if (
+      controlMode === "student-operated" &&
+      previousControlMode.current !== "student-operated"
+    ) {
+      setStudentChannels(initialStudentChannels);
+      setCapturedBloodPressure(null);
+    }
+
+    previousControlMode.current = controlMode;
+  }, [snapshot?.monitor.controlMode]);
+
+  const heartRate = snapshot?.patient.heartRate ?? 80;
+  const spo2 = snapshot?.patient.spo2 ?? 98;
+  const respiratoryRate = snapshot?.patient.respiratoryRate ?? 16;
+  const etco2 = snapshot?.patient.etco2 ?? 35;
+  const ecgSampler = useMemo(
+    () => (timeSeconds: number) => sampleSinusEcg({ heartRate, timeSeconds }),
+    [heartRate],
+  );
+  const plethSampler = useMemo(
+    () => (timeSeconds: number) => samplePleth({ heartRate, spo2, timeSeconds }),
+    [heartRate, spo2],
+  );
+  const capnographySampler = useMemo(
+    () => (timeSeconds: number) =>
+      sampleCapnography({ respiratoryRate, etco2, timeSeconds }),
+    [etco2, respiratoryRate],
+  );
+
+  const setGain = (channel: MonitorChannel, gain: WaveformGain) => {
+    setGains((current) => ({ ...current, [channel]: gain }));
+  };
+
+  const toggleStudentChannel = (channel: MonitorChannel) => {
+    setStudentChannels((current) => ({ ...current, [channel]: !current[channel] }));
+  };
+
+  const isChannelActive = (channel: MonitorChannel) =>
+    snapshot?.monitor.controlMode === "instructor-managed" || studentChannels[channel];
+
   return (
     <main className="monitor-shell">
       <header className="monitor-header">
@@ -459,19 +575,99 @@ function MonitorSession() {
 
       {snapshot ? (
         <>
-          <WaveformCanvas heartRate={snapshot.patient.heartRate} />
-          <section className="vital-grid" aria-label="Displayed vital signs">
-            <VitalDisplay label="Heart rate" value={snapshot.patient.heartRate} unit="bpm" testId="monitor-heart-rate" />
-            <VitalDisplay label="SpO2" value={snapshot.patient.spo2} unit="%" />
-            <VitalDisplay label="Respiratory rate" value={snapshot.patient.respiratoryRate} unit="/min" />
+          <DisplayControls
+            gains={gains}
+            showGrid={showGrid}
+            sweepSpeed={sweepSpeed}
+            onGainChange={setGain}
+            onGridChange={setShowGrid}
+            onSweepSpeedChange={setSweepSpeed}
+          />
+
+          {snapshot.monitor.controlMode === "student-operated" ? (
+            <section className="student-controls" aria-label="Student monitor controls">
+              {(["ecg", "pleth", "capnography"] as const).map((channel) => (
+                <button
+                  key={channel}
+                  type="button"
+                  aria-pressed={studentChannels[channel]}
+                  onClick={() => toggleStudentChannel(channel)}
+                >
+                  {studentChannels[channel] ? "Disconnect" : "Activate"} {channelLabel(channel)}
+                </button>
+              ))}
+              <button
+                type="button"
+                data-testid="nibp-capture"
+                onClick={() => setCapturedBloodPressure({ ...snapshot.patient.bloodPressure })}
+              >
+                Measure NIBP
+              </button>
+            </section>
+          ) : null}
+
+          <section className="monitor-display" aria-label="Displayed waveforms and vital signs">
+            <WaveformRow
+              active={isChannelActive("ecg")}
+              channel="ecg"
+              color="#41f294"
+              gain={gains.ecg}
+              label="ECG II"
+              numericLabel="Heart rate"
+              numericTestId="monitor-heart-rate"
+              numericUnit="bpm"
+              numericValue={snapshot.patient.heartRate}
+              sampler={ecgSampler}
+              showGrid={showGrid}
+              sweepSpeed={sweepSpeed}
+            />
+            <WaveformRow
+              active={isChannelActive("pleth")}
+              baselineRatio={0.82}
+              channel="pleth"
+              color="#56c8ff"
+              gain={gains.pleth}
+              label="Pleth"
+              numericLabel="SpO2"
+              numericUnit="%"
+              numericValue={snapshot.patient.spo2}
+              sampler={plethSampler}
+              showGrid={showGrid}
+              sweepSpeed={sweepSpeed}
+            />
+            <WaveformRow
+              active={isChannelActive("capnography")}
+              baselineRatio={0.86}
+              channel="capnography"
+              color="#f2d15f"
+              gain={gains.capnography}
+              label="CO2"
+              numericLabel="EtCO2"
+              numericUnit="mmHg"
+              numericValue={snapshot.patient.etco2}
+              sampler={capnographySampler}
+              secondaryLabel="Respiratory rate"
+              secondaryUnit="/min"
+              secondaryValue={snapshot.patient.respiratoryRate}
+              showGrid={showGrid}
+              sweepSpeed={sweepSpeed}
+            />
+          </section>
+
+          <section className="monitor-summary" aria-label="Non-invasive blood pressure">
             <VitalDisplay
               label="NIBP"
-              value={`${snapshot.patient.bloodPressure.systolic}/${snapshot.patient.bloodPressure.diastolic}`}
+              value={
+                snapshot.monitor.controlMode === "instructor-managed"
+                  ? `${snapshot.patient.bloodPressure.systolic}/${snapshot.patient.bloodPressure.diastolic}`
+                  : capturedBloodPressure
+                    ? `${capturedBloodPressure.systolic}/${capturedBloodPressure.diastolic}`
+                    : "--/--"
+              }
               unit="mmHg"
               compact
               testId="monitor-blood-pressure"
             />
-            <VitalDisplay label="EtCO2" value={snapshot.patient.etco2} unit="mmHg" />
           </section>
           <p className="metadata">Revision {snapshot.revision}. Expires {formatTime(snapshot.expiresAt)}.</p>
         </>
@@ -483,6 +679,145 @@ function MonitorSession() {
       <TrainingWarning />
     </main>
   );
+}
+
+function DisplayControls({
+  gains,
+  showGrid,
+  sweepSpeed,
+  onGainChange,
+  onGridChange,
+  onSweepSpeedChange,
+}: {
+  gains: Record<MonitorChannel, WaveformGain>;
+  showGrid: boolean;
+  sweepSpeed: SweepSpeed;
+  onGainChange(channel: MonitorChannel, gain: WaveformGain): void;
+  onGridChange(showGrid: boolean): void;
+  onSweepSpeedChange(speed: SweepSpeed): void;
+}) {
+  return (
+    <section className="display-controls" aria-label="Waveform display controls">
+      <fieldset>
+        <legend>Sweep speed</legend>
+        {[12.5, 25, 50].map((speed) => (
+          <label key={speed}>
+            <input
+              type="radio"
+              name="sweep-speed"
+              checked={sweepSpeed === speed}
+              onChange={() => onSweepSpeedChange(speed as SweepSpeed)}
+            />
+            {speed} mm/s
+          </label>
+        ))}
+      </fieldset>
+      <label className="grid-toggle">
+        <input
+          data-testid="grid-toggle"
+          type="checkbox"
+          checked={showGrid}
+          onChange={(event) => onGridChange(event.currentTarget.checked)}
+        />
+        Grid
+      </label>
+      {(["ecg", "pleth", "capnography"] as const).map((channel) => (
+        <label key={channel}>
+          {channelLabel(channel)} gain
+          <select
+            aria-label={`${channelLabel(channel)} gain`}
+            value={gains[channel]}
+            onChange={(event) => onGainChange(channel, Number(event.currentTarget.value) as WaveformGain)}
+          >
+            <option value={0.5}>0.5x</option>
+            <option value={1}>1x</option>
+            <option value={2}>2x</option>
+          </select>
+        </label>
+      ))}
+    </section>
+  );
+}
+
+function WaveformRow({
+  active,
+  baselineRatio,
+  channel,
+  color,
+  gain,
+  label,
+  numericLabel,
+  numericTestId,
+  numericUnit,
+  numericValue,
+  sampler,
+  secondaryLabel,
+  secondaryUnit,
+  secondaryValue,
+  showGrid,
+  sweepSpeed,
+}: {
+  active: boolean;
+  baselineRatio?: number;
+  channel: MonitorChannel;
+  color: string;
+  gain: WaveformGain;
+  label: string;
+  numericLabel: string;
+  numericTestId?: string;
+  numericUnit: string;
+  numericValue: number;
+  sampler(timeSeconds: number): number;
+  secondaryLabel?: string;
+  secondaryUnit?: string;
+  secondaryValue?: number;
+  showGrid: boolean;
+  sweepSpeed: SweepSpeed;
+}) {
+  return (
+    <article className={`waveform-row waveform-row-${channel}`}>
+      <div className="waveform-trace">
+        <div className="waveform-label">
+          <strong>{label}</strong>
+          <span>{active ? `${sweepSpeed} mm/s / ${gain}x` : "Unavailable"}</span>
+        </div>
+        <WaveformCanvas
+          active={active}
+          baselineRatio={baselineRatio}
+          color={color}
+          gain={gain}
+          label={label}
+          sampler={sampler}
+          showGrid={showGrid}
+          sweepSpeed={sweepSpeed}
+          testId={`${channel}-waveform`}
+        />
+      </div>
+      <div className="channel-values" style={{ color }}>
+        <span>{numericLabel}</span>
+        <strong data-testid={numericTestId}>{active ? numericValue : "--"}</strong>
+        <small>{numericUnit}</small>
+        {secondaryLabel && secondaryUnit && secondaryValue !== undefined ? (
+          <div className="secondary-vital">
+            <span>{secondaryLabel}</span>
+            <strong>{active ? secondaryValue : "--"}</strong>
+            <small>{secondaryUnit}</small>
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function channelLabel(channel: MonitorChannel) {
+  switch (channel) {
+    case "ecg":
+      return "ECG";
+    case "pleth":
+      return "SpO2";
+    case "capnography":
+      return "CO2";
+  }
 }
 
 function VitalDisplay({

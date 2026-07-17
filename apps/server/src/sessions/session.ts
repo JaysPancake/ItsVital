@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import {
   type CommandApplyResult,
   type InstructorCommand,
+  type MonitorState,
   type PatientState,
   protocolVersion,
   type SessionCreateResult,
@@ -18,9 +19,7 @@ export interface SimulationSession {
   revision: number;
   expiresAt: Date;
   patient: PatientState;
-  monitor: {
-    rhythm: "sinus";
-  };
+  monitor: MonitorState;
 }
 
 export interface SessionStore {
@@ -65,7 +64,7 @@ export function createSimulationSession(now = new Date()): SimulationSession {
     revision: 0,
     expiresAt: new Date(now.getTime() + sessionTtlMs),
     patient: createDefaultPatientState(),
-    monitor: { rhythm: "sinus" },
+    monitor: { rhythm: "sinus", controlMode: "instructor-managed" },
   };
 }
 
@@ -111,6 +110,9 @@ export function applyInstructorCommand(
       break;
     case "rhythm.set":
       session.monitor = { ...monitor, rhythm: command.payload.rhythm };
+      break;
+    case "monitor.controlMode.set":
+      session.monitor = { ...monitor, controlMode: command.payload.controlMode };
       break;
   }
 

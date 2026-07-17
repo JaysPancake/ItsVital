@@ -19,6 +19,7 @@ describe("session domain", () => {
       expect(result.joinCode).toHaveLength(6);
       expect(result.instructorToken).not.toBe(result.joinCode);
       expect(result.snapshot.patient.heartRate).toBe(80);
+      expect(result.snapshot.monitor.controlMode).toBe("instructor-managed");
       expect(result.snapshot.revision).toBe(0);
     }
   });
@@ -48,6 +49,21 @@ describe("session domain", () => {
     if (result.ok) {
       expect(result.snapshot.revision).toBe(1);
       expect(result.snapshot.patient.heartRate).toBe(102);
+    }
+  });
+
+  it("authorizes and applies monitor control mode changes", () => {
+    const session = createSimulationSession();
+    const result = applyInstructorCommand(session, session.instructorToken, {
+      type: "monitor.controlMode.set",
+      payload: { controlMode: "student-operated" },
+    });
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.snapshot.monitor.controlMode).toBe("student-operated");
+      expect(result.snapshot.revision).toBe(1);
     }
   });
 

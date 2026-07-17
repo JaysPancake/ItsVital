@@ -1,17 +1,38 @@
 import { useEffect, useRef } from "react";
-import { sampleSinusEcgEnvelope } from "@itsvital/waveforms";
+import type { WaveformSampler } from "@itsvital/waveforms";
+import { CanvasWaveformRenderer } from "./CanvasWaveformRenderer";
 
 interface WaveformCanvasProps {
-  heartRate: number;
+  active: boolean;
+  baselineRatio?: number;
+  color: string;
+  gain: number;
+  label: string;
+  sampler: WaveformSampler;
+  showGrid: boolean;
+  sweepSpeed: number;
+  testId: string;
 }
 
-export function WaveformCanvas({ heartRate }: WaveformCanvasProps) {
+export function WaveformCanvas({
+  active,
+  baselineRatio = 0.7,
+  color,
+  gain,
+  label,
+  sampler,
+  showGrid,
+  sweepSpeed,
+  testId,
+}: WaveformCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const heartRateRef = useRef(heartRate);
+  const samplerRef = useRef(sampler);
+  const optionsRef = useRef({ active, baselineRatio, color, gain, showGrid, sweepSpeed });
 
   useEffect(() => {
-    heartRateRef.current = heartRate;
-  }, [heartRate]);
+    samplerRef.current = sampler;
+    optionsRef.current = { active, baselineRatio, color, gain, showGrid, sweepSpeed };
+  }, [active, baselineRatio, color, gain, sampler, showGrid, sweepSpeed]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,9 +41,11 @@ export function WaveformCanvas({ heartRate }: WaveformCanvasProps) {
       return;
     }
 
-    const context = canvas.getContext("2d");
+    let renderer: CanvasWaveformRenderer;
 
-    if (!context) {
+    try {
+      renderer = new CanvasWaveformRenderer(canvas);
+    } catch {
       return;
     }
 
@@ -30,77 +53,23 @@ export function WaveformCanvas({ heartRate }: WaveformCanvasProps) {
     const startedAt = performance.now();
 
     const render = () => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      const scale = window.devicePixelRatio || 1;
-      const targetWidth = Math.max(1, Math.floor(width * scale));
-      const targetHeight = Math.max(1, Math.floor(height * scale));
-
-      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-      }
-
-      context.setTransform(scale, 0, 0, scale, 0, 0);
-      context.clearRect(0, 0, width, height);
-      context.fillStyle = "#07110f";
-      context.fillRect(0, 0, width, height);
-
-      context.strokeStyle = "rgba(28, 184, 122, 0.18)";
-      context.lineWidth = 1;
-
-      for (let x = 0; x < width; x += 24) {
-        context.beginPath();
-        context.moveTo(x, 0);
-        context.lineTo(x, height);
-        context.stroke();
-      }
-
-      for (let y = 0; y < height; y += 24) {
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.stroke();
-      }
-
-      context.strokeStyle = "#2bf78f";
-      context.lineWidth = 2;
-      context.beginPath();
-
       const elapsedSeconds = (performance.now() - startedAt) / 1000;
-      const secondsAcrossCanvas = 4;
-      const secondsPerPixel = secondsAcrossCanvas / width;
-
-      for (let x = 0; x < width; x += 1) {
-        const timeSeconds = elapsedSeconds - secondsAcrossCanvas + x * secondsPerPixel;
-        const envelope = sampleSinusEcgEnvelope({
-          heartRate: heartRateRef.current,
-          startTimeSeconds: timeSeconds,
-          durationSeconds: secondsPerPixel,
-          sampleCount: 10,
-        });
-        const minY = height * 0.55 - envelope.min * height * 0.32;
-        const maxY = height * 0.55 - envelope.max * height * 0.32;
-
-        if (x === 0) {
-          context.moveTo(x, minY);
-        } else {
-          context.lineTo(x, minY);
-        }
-
-        context.lineTo(x, maxY);
-      }
-
-      context.stroke();
+      renderer.setOptions({ ...optionsRef.current, elapsedSeconds, sampler: samplerRef.current });
+      renderer.render(samplerRef.current, elapsedSeconds);
       animationFrameId = requestAnimationFrame(render);
     };
 
     animationFrameId = requestAnimationFrame(render);
 
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+    return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
-  return <canvas ref={canvasRef} className="waveform" aria-label="Sinus ECG waveform" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="waveform"
+      data-testid={testId}
+      aria-label={`${label} waveform${active ? "" : ", unavailable"}`}
+    />
+  );
 }

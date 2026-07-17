@@ -123,6 +123,22 @@ describe("realtime server", () => {
     expect(snapshot.patient.heartRate).toBe(101);
     expect(snapshot.revision).toBe(1);
 
+    const nextModeSnapshot = new Promise<SessionSnapshot>((resolve) => {
+      monitor.once("session:snapshot", resolve);
+    });
+    const modeApplied = await applyCommand(instructor, {
+      protocolVersion,
+      sessionId: created.sessionId,
+      instructorToken: created.instructorToken,
+      command: {
+        type: "monitor.controlMode.set",
+        payload: { controlMode: "student-operated" },
+      },
+    });
+
+    expect(modeApplied.ok).toBe(true);
+    expect((await nextModeSnapshot).monitor.controlMode).toBe("student-operated");
+
     const resynced = await resyncSession(monitor, {
       protocolVersion,
       role: "monitor",
@@ -133,7 +149,8 @@ describe("realtime server", () => {
 
     if (resynced.ok) {
       expect(resynced.snapshot.patient.heartRate).toBe(101);
-      expect(resynced.snapshot.revision).toBe(1);
+      expect(resynced.snapshot.monitor.controlMode).toBe("student-operated");
+      expect(resynced.snapshot.revision).toBe(2);
     }
   });
 
@@ -153,7 +170,10 @@ describe("realtime server", () => {
       protocolVersion,
       sessionId: created.sessionId,
       instructorToken: created.joinCode,
-      command: { type: "vitals.patch", payload: { heartRate: 110 } },
+      command: {
+        type: "monitor.controlMode.set",
+        payload: { controlMode: "student-operated" },
+      },
     });
 
     expect(applied).toEqual({

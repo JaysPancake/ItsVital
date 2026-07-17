@@ -17,9 +17,9 @@ patient care, diagnosis, treatment, monitoring, or clinical decision-making.
 - Keep waveform generation browser-local; do not stream waveform samples over Socket.IO.
 - Document clinical simplifications instead of inventing false precision.
 
-## Current Baseline: v0.0.1
+## Current Baseline: v0.0.2
 
-Status: Complete pre-alpha vertical slice.
+Status: Complete pre-alpha monitor and waveform stability milestone.
 
 The current project already supports:
 
@@ -30,7 +30,9 @@ The current project already supports:
 - Real-time Socket.IO synchronization.
 - Server-authoritative state and runtime validation.
 - Numeric controls for heart rate, SpO2, respiratory rate, NIBP, and EtCO2.
-- One locally generated sinus ECG waveform.
+- Locally generated sinus ECG, pleth, and capnography waveforms.
+- Reusable Canvas 2D rendering with local sweep, grid, and gain controls.
+- Instructor-managed and student-operated monitor modes.
 - Monitor reconnect with full current snapshot recovery.
 - Automatic session expiration and cleanup.
 - Unit tests and a two-browser Playwright workflow.
@@ -39,16 +41,17 @@ Known limitations:
 
 - The monitor is still a narrow training slice, not a complete monitor simulation.
 - Only sinus ECG is supported.
-- Pleth and capnography waveforms are not yet implemented.
 - Alarm behavior is not yet implemented.
-- NIBP is displayed as a value, not as a measurement cycle.
+- NIBP capture is immediate and does not yet model a timed measurement cycle.
 - Scenario playback and branching instructor workflows are not yet implemented.
 
 ## v0.0.2: Monitor Feel And Waveform Stability
 
 Goal: make the existing monitor view feel stable, credible, and alive.
 
-Planned changes:
+Status: Complete.
+
+Completed changes:
 
 - Fix current ECG/QRS rendering issues.
 - Refactor waveform drawing toward a reusable Canvas 2D renderer shape.
@@ -58,7 +61,7 @@ Planned changes:
 - Improve waveform labels, grid behavior, scaling, and responsive sizing.
 - Keep waveform generation framework-independent in `packages/waveforms`.
 - Add waveform tests for finite output, timing, and safe boundary handling.
-- Allow monitor to choose student/instrutor dependent states. (Whether the student must press an NIBP button, or activate on their end vitals, or if this is all managed and displayed by instructor.)
+- Add instructor-managed and student-operated modes, including learner channel activation and immediate NIBP value capture.
 
 Release criteria:
 

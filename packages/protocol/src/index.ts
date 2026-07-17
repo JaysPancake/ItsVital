@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-export const protocolVersion = 1;
+export const protocolVersion = 2;
 
 export const rhythmSchema = z.literal("sinus");
+export const monitorControlModeSchema = z.enum(["instructor-managed", "student-operated"]);
 
 export const vitalRanges = {
   heartRate: { min: 20, max: 250 },
@@ -38,6 +39,7 @@ export const patientStateSchema = z.object({
 
 export const monitorStateSchema = z.object({
   rhythm: rhythmSchema,
+  controlMode: monitorControlModeSchema,
 });
 
 export const sessionSnapshotSchema = z.object({
@@ -74,6 +76,10 @@ export const instructorCommandSchema = z.discriminatedUnion("type", [
     type: z.literal("rhythm.set"),
     payload: z.object({ rhythm: rhythmSchema }),
   }),
+  z.object({
+    type: z.literal("monitor.controlMode.set"),
+    payload: z.object({ controlMode: monitorControlModeSchema }),
+  }),
 ]);
 
 export const sessionCreateRequestSchema = z.object({
@@ -108,6 +114,7 @@ export const commandApplyRequestSchema = z.object({
 });
 
 export type Rhythm = z.infer<typeof rhythmSchema>;
+export type MonitorControlMode = z.infer<typeof monitorControlModeSchema>;
 export type BloodPressure = z.infer<typeof bloodPressureSchema>;
 export type PatientState = z.infer<typeof patientStateSchema>;
 export type MonitorState = z.infer<typeof monitorStateSchema>;
