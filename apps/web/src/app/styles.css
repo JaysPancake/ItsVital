@@ -104,12 +104,20 @@ nav a {
   text-align: center;
 }
 
-.connected {
+.connection-connected {
   color: #067647;
   background: #e7f8ef;
 }
 
-.disconnected {
+.connection-connecting,
+.connection-reconnecting {
+  color: #725b00;
+  background: #fff8d6;
+}
+
+.connection-disconnected,
+.connection-expired,
+.connection-error {
   color: #9d2f21;
   background: #fff0ed;
 }
@@ -185,6 +193,53 @@ nav a {
   font-size: 1.35rem;
 }
 
+.number-input-group {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+  gap: 0.35rem;
+}
+
+.number-input-group button {
+  min-height: 3rem;
+  padding: 0.25rem;
+  font-size: 1.35rem;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.alarm-controls {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 2px solid #d1d9d6;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.alarm-controls-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.alarm-controls h2,
+.alarm-controls p {
+  margin: 0;
+}
+
+.mute-control.muted {
+  border-color: #9d2f21;
+  color: #9d2f21;
+  background: #fff0ed;
+}
+
 .number-control small,
 .vital small {
   color: #526168;
@@ -223,6 +278,49 @@ nav a {
   border-block: 1px solid #244238;
   color: #c1d2cb;
   font-size: 0.82rem;
+}
+
+.alarm-status-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #244238;
+}
+
+.alarm-summary {
+  margin: 0;
+  color: #b9cbc4;
+}
+
+.alarm-summary.active {
+  padding: 0.55rem 0.75rem;
+  border: 2px solid #ff6b57;
+  color: #fff0ed;
+  background: #49160f;
+}
+
+.audio-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  color: #b9cbc4;
+}
+
+.audio-status button {
+  border-color: #668178;
+  color: #e9fff4;
+  background: #0b1713;
+}
+
+.audio-muted {
+  padding: 0.35rem 0.55rem;
+  border: 2px solid #ffb4a9;
+  color: #ffd8d1;
+  background: #49160f;
 }
 
 .display-controls fieldset {
@@ -298,6 +396,26 @@ nav a {
 .waveform-label strong {
   color: #dcebe5;
   font-size: 0.85rem;
+}
+
+.waveform-label > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.alarm-badge {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #ff8c7c;
+  border-radius: 3px;
+  color: #fff0ed;
+  background: #6b1e14;
+  font-weight: 900;
+}
+
+.waveform-row-alarm {
+  box-shadow: inset 4px 0 0 #ff6b57;
 }
 
 .waveform {

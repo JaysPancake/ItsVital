@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  alarmThresholdsSchema,
   instructorCommandSchema,
   protocolVersion,
   sessionSnapshotSchema,
@@ -9,7 +10,7 @@ import {
 describe("protocolVersion", () => {
   it("is a positive integer", () => {
     expect(Number.isInteger(protocolVersion)).toBe(true);
-    expect(protocolVersion).toBe(2);
+    expect(protocolVersion).toBe(3);
   });
 });
 
@@ -64,10 +65,90 @@ describe("instructorCommandSchema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("accepts alarm threshold and mute commands", () => {
+    expect(
+      instructorCommandSchema.safeParse({
+        type: "alarm.thresholds.set",
+        payload: {
+          heartRate: { low: 50, high: 120 },
+          spo2: { low: 94 },
+          respiratoryRate: { low: 8, high: 30 },
+          etco2: { low: 30, high: 50 },
+        },
+      }).success,
+    ).toBe(true);
+    expect(
+      instructorCommandSchema.safeParse({
+        type: "alarm.mute.set",
+        payload: { audioMuted: true },
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("alarmThresholdsSchema", () => {
+  const thresholds = {
+    heartRate: { low: 50, high: 120 },
+    spo2: { low: 94 },
+    respiratoryRate: { low: 8, high: 30 },
+    etco2: { low: 30, high: 50 },
+  };
+
+  it("accepts complete, ordered thresholds", () => {
+    expect(alarmThresholdsSchema.safeParse(thresholds).success).toBe(true);
+  });
+
+  it("rejects missing, out-of-range, and inverted thresholds", () => {
+    expect(
+      alarmThresholdsSchema.safeParse({ ...thresholds, spo2: undefined }).success,
+    ).toBe(false);
+    expect(
+      alarmThresholdsSchema.safeParse({ ...thresholds, spo2: { low: 101 } }).success,
+    ).toBe(false);
+    expect(
+      alarmThresholdsSchema.safeParse({
+        ...thresholds,
+        heartRate: { low: 120, high: 120 },
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("sessionSnapshotSchema", () => {
-  it("accepts a complete v0.0.2 session snapshot", () => {
+  it("accepts a complete v0.0.3 session snapshot", () => {
+    const result = sessionSnapshotSchema.safeParse({
+      protocolVersion,
+      sessionId: "7d98be1d-9028-41b4-95aa-c51f4e95f503",
+      revision: 1,
+      serverTime: "2026-07-11T12:00:00.000Z",
+      expiresAt: "2026-07-11T12:30:00.000Z",
+      patient: {
+        heartRate: 80,
+        spo2: 98,
+        respiratoryRate: 16,
+        etco2: 35,
+        bloodPressure: { systolic: 120, diastolic: 80 },
+      },
+      monitor: {
+        rhythm: "sinus",
+        controlMode: "instructor-managed",
+        alarms: {
+          thresholds: {
+            heartRate: { low: 50, high: 120 },
+            spo2: { low: 94 },
+            respiratoryRate: { low: 8, high: 30 },
+            etco2: { low: 30, high: 50 },
+          },
+          audioMuted: false,
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects snapshots without the v0.0.3 alarm configuration", () => {
     const result = sessionSnapshotSchema.safeParse({
       protocolVersion,
       sessionId: "7d98be1d-9028-41b4-95aa-c51f4e95f503",
@@ -82,26 +163,6 @@ describe("sessionSnapshotSchema", () => {
         bloodPressure: { systolic: 120, diastolic: 80 },
       },
       monitor: { rhythm: "sinus", controlMode: "instructor-managed" },
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects snapshots without the v0.0.2 monitor control mode", () => {
-    const result = sessionSnapshotSchema.safeParse({
-      protocolVersion,
-      sessionId: "7d98be1d-9028-41b4-95aa-c51f4e95f503",
-      revision: 1,
-      serverTime: "2026-07-11T12:00:00.000Z",
-      expiresAt: "2026-07-11T12:30:00.000Z",
-      patient: {
-        heartRate: 80,
-        spo2: 98,
-        respiratoryRate: 16,
-        etco2: 35,
-        bloodPressure: { systolic: 120, diastolic: 80 },
-      },
-      monitor: { rhythm: "sinus" },
     });
 
     expect(result.success).toBe(false);

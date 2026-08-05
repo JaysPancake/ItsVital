@@ -14,9 +14,9 @@ ItsVital is intended to become a complete, practical simulator that educators ca
 
 ## Project status
 
-**Status: v0.0.2 pre-alpha**
+**Status: v0.0.3 pre-alpha**
 
-The monitor now renders stable ECG, pleth, and capnography waveforms with local display controls and instructor-managed or student-operated workflows. Real-time synchronization and reconnect recovery remain server-authoritative. The project remains pre-alpha and is not yet a complete clinical monitor simulation.
+The monitor now renders stable ECG, pleth, and capnography waveforms with configurable basic alarms, local display controls, and instructor-managed or student-operated workflows. Real-time synchronization and reconnect recovery remain server-authoritative. The project remains pre-alpha and is not yet a complete clinical monitor simulation.
 
 Feature status is described as:
 
@@ -123,15 +123,21 @@ The following are intentionally deferred:
 
 The student NIBP control captures the current value immediately. Timed cuff cycles, result timestamps, and trend history are intentionally deferred.
 
+## Alarm milestone: v0.0.3
+
+### Complete in v0.0.3
+
+- Server-authoritative alarm limits for heart rate, SpO2, respiratory rate, and EtCO2
+- Visible high/low alarm text and steady channel highlighting
+- Non-latching alarms that clear when values return within their configured limits
+- Original, manufacturer-neutral two-beep audio generated locally with Web Audio
+- Per-browser audio enabling with an instructor-controlled, synchronized mute state
+- Accessible instructor step controls and local blood-pressure relationship validation
+- Clear connecting, connected, reconnecting/stale, expired, and error states
+
+New sessions use neutral adult training defaults: heart rate 50–120 bpm, SpO2 low 94%, respiratory rate 8–30/min, and EtCO2 30–50 mmHg. These are simplified simulation defaults, not clinical recommendations. Alarms evaluate only active continuous channels; NIBP alarms remain deferred until timed measurement behavior is added in v0.0.4.
+
 ## Planned roadmap
-
-### v0.0.3 — Basic alarms and instructor ergonomics
-
-- Runtime-validated alarm thresholds
-- Visible alarm states
-- Original alarm audio and unmistakable mute state
-- Instructor alarm controls and faster vital adjustment
-- Improved connection and session messaging
 
 ### v0.0.4 — NIBP, trends, and event log
 
@@ -286,7 +292,7 @@ pnpm dev
 - Web application: `http://localhost:5173`
 - Server health endpoint: `http://localhost:3001/health`
 
-The current interface supports the v0.0.2 instructor-to-monitor workflow, three local waveform channels, display controls, and student-operated monitor setup. It remains a pre-alpha simulator, not a medical device or complete clinical monitor product.
+The current interface supports the v0.0.3 instructor-to-monitor workflow, three local waveform channels, basic continuous-vital alarms, display controls, and student-operated monitor setup. It remains a pre-alpha simulator, not a medical device or complete clinical monitor product.
 
 ### Available commands
 

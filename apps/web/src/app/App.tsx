@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router";
 import {
+  type AlarmThresholds,
   type BloodPressure,
   type CommandApplyResult,
   type InstructorCommand,
@@ -17,18 +18,27 @@ import {
   type SessionCreateResult,
   type SessionJoinResult,
   type SessionSnapshot,
+  vitalRanges,
 } from "@itsvital/protocol";
 import { sampleCapnography, samplePleth, sampleSinusEcg } from "@itsvital/waveforms";
 import { WaveformCanvas } from "../components/WaveformCanvas";
+import {
+  alarmSummary,
+  getActiveAlarms,
+  type ActiveAlarm,
+  type ActiveChannels,
+} from "../features/alarms/alarmState";
+import { useAlarmAudio } from "../features/alarms/useAlarmAudio";
 import { getSocket } from "../infrastructure/socket";
 
 const instructorTokenKey = (sessionId: string) => `itsvital.instructor.${sessionId}`;
 const instructorJoinCodeKey = (sessionId: string) => `itsvital.joinCode.${sessionId}`;
+type ConnectionStatus = "connecting" | "connected" | "reconnecting" | "disconnected" | "expired" | "error";
 
 function Home() {
   return (
     <main className="home">
-      <p className="status">v0.0.2</p>
+      <p className="status">v0.0.3</p>
       <h1>ItsVital</h1>
       <p>Browser-based patient-monitor simulation for education and training.</p>
       <nav aria-label="Simulation roles">
@@ -87,7 +97,7 @@ function InstructorSession() {
   const { sessionId } = useParams();
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const instructorToken = sessionId ? localStorage.getItem(instructorTokenKey(sessionId)) : null;
   const joinCode = sessionId ? localStorage.getItem(instructorJoinCodeKey(sessionId)) : null;
 
@@ -107,6 +117,7 @@ function InstructorSession() {
             setError(null);
           } else {
             setError(result.error.message);
+            setConnectionStatus(result.error.code === "expired" ? "expired" : "error");
           }
         },
       );
@@ -117,16 +128,23 @@ function InstructorSession() {
       }
     };
     const handleConnect = () => {
-      setIsConnected(true);
+      setConnectionStatus("connected");
       join();
     };
-    const handleDisconnect = () => {
-      setIsConnected(false);
+    const handleDisconnect = (reason: string) => {
+      setConnectionStatus(reason === "io server disconnect" ? "disconnected" : "reconnecting");
+    };
+    const handleConnectError = () => setConnectionStatus("error");
+    const handleExpired = () => {
+      setConnectionStatus("expired");
+      setError("Session has expired.");
     };
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
     socket.on("session:snapshot", handleSnapshot);
+    socket.on("session:expired", handleExpired);
 
     if (socket.connected) {
       queueMicrotask(handleConnect);
@@ -137,7 +155,9 @@ function InstructorSession() {
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
       socket.off("session:snapshot", handleSnapshot);
+      socket.off("session:expired", handleExpired);
     };
   }, [instructorToken, sessionId]);
 
@@ -154,6 +174,11 @@ function InstructorSession() {
   }
 
   const applyCommand = (command: InstructorCommand) => {
+    if (connectionStatus !== "connected") {
+      setError("Controls are unavailable until the instructor reconnects.");
+      return;
+    }
+
     const socket = getSocket();
 
     socket.emit(
@@ -178,6 +203,12 @@ function InstructorSession() {
     applyCommand({ type: "bloodPressure.set", payload: bloodPressure });
   };
 
+  const applyAlarmThresholds = (thresholds: AlarmThresholds) => {
+    applyCommand({ type: "alarm.thresholds.set", payload: thresholds });
+  };
+
+  const controlsDisabled = connectionStatus !== "connected";
+
   return (
     <main className="workspace">
       <header className="toolbar">
@@ -185,7 +216,7 @@ function InstructorSession() {
           <p className="status">Instructor</p>
           <h1>Session controls</h1>
         </div>
-        <ConnectionState isConnected={isConnected} />
+        <ConnectionState status={connectionStatus} hasSnapshot={snapshot !== null} />
       </header>
 
       {snapshot ? (
@@ -204,7 +235,7 @@ function InstructorSession() {
             ) : null}
           </section>
 
-          <fieldset className="mode-control">
+          <fieldset className="mode-control" disabled={controlsDisabled}>
             <legend>Monitor control</legend>
             <label>
               <input
@@ -246,6 +277,8 @@ function InstructorSession() {
               value={snapshot.patient.heartRate}
               min={20}
               max={250}
+              step={5}
+              disabled={controlsDisabled}
               testId="heart-rate-input"
               onCommit={(value) => applyVitalsPatch({ heartRate: value })}
             />
@@ -255,6 +288,8 @@ function InstructorSession() {
               value={snapshot.patient.spo2}
               min={0}
               max={100}
+              step={1}
+              disabled={controlsDisabled}
               onCommit={(value) => applyVitalsPatch({ spo2: value })}
             />
             <NumberControl
@@ -263,6 +298,8 @@ function InstructorSession() {
               value={snapshot.patient.respiratoryRate}
               min={0}
               max={80}
+              step={1}
+              disabled={controlsDisabled}
               onCommit={(value) => applyVitalsPatch({ respiratoryRate: value })}
             />
             <NumberControl
@@ -271,6 +308,8 @@ function InstructorSession() {
               value={snapshot.patient.etco2}
               min={0}
               max={100}
+              step={1}
+              disabled={controlsDisabled}
               onCommit={(value) => applyVitalsPatch({ etco2: value })}
             />
             <NumberControl
@@ -279,6 +318,13 @@ function InstructorSession() {
               value={snapshot.patient.bloodPressure.systolic}
               min={40}
               max={260}
+              step={5}
+              disabled={controlsDisabled}
+              validate={(value) =>
+                value > snapshot.patient.bloodPressure.diastolic
+                  ? null
+                  : "Systolic BP must be greater than diastolic BP."
+              }
               testId="systolic-input"
               onCommit={(value) =>
                 applyBloodPressure({ ...snapshot.patient.bloodPressure, systolic: value })
@@ -290,12 +336,27 @@ function InstructorSession() {
               value={snapshot.patient.bloodPressure.diastolic}
               min={20}
               max={180}
+              step={5}
+              disabled={controlsDisabled}
+              validate={(value) =>
+                value < snapshot.patient.bloodPressure.systolic
+                  ? null
+                  : "Diastolic BP must be less than systolic BP."
+              }
               testId="diastolic-input"
               onCommit={(value) =>
                 applyBloodPressure({ ...snapshot.patient.bloodPressure, diastolic: value })
               }
             />
           </section>
+          <AlarmControls
+            alarms={snapshot.monitor.alarms}
+            disabled={controlsDisabled}
+            onThresholdsChange={applyAlarmThresholds}
+            onMuteChange={(audioMuted) =>
+              applyCommand({ type: "alarm.mute.set", payload: { audioMuted } })
+            }
+          />
           <p className="metadata">Revision {snapshot.revision}. Expires {formatTime(snapshot.expiresAt)}.</p>
         </>
       ) : (
@@ -314,11 +375,25 @@ interface NumberControlProps {
   value: number;
   min: number;
   max: number;
+  step: number;
+  disabled?: boolean;
   testId?: string;
+  validate?(value: number): string | null;
   onCommit(value: number): void;
 }
 
-function NumberControl({ label, unit, value, min, max, testId, onCommit }: NumberControlProps) {
+function NumberControl({
+  label,
+  unit,
+  value,
+  min,
+  max,
+  step,
+  disabled = false,
+  testId,
+  validate,
+  onCommit,
+}: NumberControlProps) {
   const inputId = useId();
   const errorId = `${inputId}-error`;
   const [draft, setDraft] = useState("");
@@ -347,6 +422,14 @@ function NumberControl({ label, unit, value, min, max, testId, onCommit }: Numbe
       return;
     }
 
+    const validationError = validate?.(nextValue) ?? null;
+
+    if (validationError) {
+      setError(validationError);
+      event?.currentTarget.focus();
+      return;
+    }
+
     setIsEditing(false);
     setError(null);
 
@@ -354,6 +437,24 @@ function NumberControl({ label, unit, value, min, max, testId, onCommit }: Numbe
       onCommit(nextValue);
     }
   };
+
+  const changeByStep = (direction: -1 | 1) => {
+    const nextValue = Math.max(min, Math.min(max, value + direction * step));
+    const validationError = validate?.(nextValue) ?? null;
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setError(null);
+    onCommit(nextValue);
+  };
+
+  const decrementValue = Math.max(min, value - step);
+  const incrementValue = Math.min(max, value + step);
+  const cannotDecrement = disabled || value <= min || Boolean(validate?.(decrementValue));
+  const cannotIncrement = disabled || value >= max || Boolean(validate?.(incrementValue));
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
@@ -368,39 +469,228 @@ function NumberControl({ label, unit, value, min, max, testId, onCommit }: Numbe
   };
 
   return (
-    <label className="number-control">
-      <span id={inputId}>
+    <div className="number-control">
+      <label id={`${inputId}-label`} htmlFor={inputId}>
         {label} <small>{unit}</small>
-      </span>
-      <input
-        data-testid={testId}
-        type="number"
-        inputMode="numeric"
-        min={min}
-        max={max}
-        value={displayedValue}
-        aria-labelledby={inputId}
-        aria-invalid={error ? "true" : "false"}
-        aria-describedby={error ? errorId : undefined}
-        onFocus={() => {
-          setDraft(String(value));
-          setIsEditing(true);
-          setError(null);
-        }}
-        onChange={(event) => {
-          setDraft(event.currentTarget.value);
-          setIsEditing(true);
-          setError(null);
-        }}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
-      />
+      </label>
+      <div className="number-input-group">
+        <button
+          type="button"
+          aria-label={`Decrease ${label} by ${step}`}
+          disabled={cannotDecrement}
+          onClick={() => changeByStep(-1)}
+        >
+          −
+        </button>
+        <input
+          id={inputId}
+          data-testid={testId}
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          step={step}
+          disabled={disabled}
+          value={displayedValue}
+          aria-labelledby={`${inputId}-label`}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={error ? errorId : undefined}
+          onFocus={() => {
+            setDraft(String(value));
+            setIsEditing(true);
+            setError(null);
+          }}
+          onChange={(event) => {
+            setDraft(event.currentTarget.value);
+            setIsEditing(true);
+            setError(null);
+          }}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+        />
+        <button
+          type="button"
+          aria-label={`Increase ${label} by ${step}`}
+          disabled={cannotIncrement}
+          onClick={() => changeByStep(1)}
+        >
+          +
+        </button>
+      </div>
       {error ? (
         <small id={errorId} className="control-error">
           {error}
         </small>
       ) : null}
-    </label>
+    </div>
+  );
+}
+
+function AlarmControls({
+  alarms,
+  disabled,
+  onThresholdsChange,
+  onMuteChange,
+}: {
+  alarms: SessionSnapshot["monitor"]["alarms"];
+  disabled: boolean;
+  onThresholdsChange(thresholds: AlarmThresholds): void;
+  onMuteChange(audioMuted: boolean): void;
+}) {
+  const thresholds = alarms.thresholds;
+
+  return (
+    <section className="alarm-controls" aria-labelledby="alarm-controls-heading">
+      <div className="alarm-controls-header">
+        <div>
+          <h2 id="alarm-controls-heading">Alarm limits</h2>
+          <p>Continuous monitor channels use non-latching training limits.</p>
+        </div>
+        <button
+          type="button"
+          className={alarms.audioMuted ? "mute-control muted" : "mute-control"}
+          aria-pressed={alarms.audioMuted}
+          disabled={disabled}
+          onClick={() => onMuteChange(!alarms.audioMuted)}
+        >
+          {alarms.audioMuted ? "Unmute alarm audio" : "Mute alarm audio"}
+        </button>
+      </div>
+      <div className="control-grid">
+        <NumberControl
+          label="Heart rate low alarm"
+          unit="bpm"
+          value={thresholds.heartRate.low}
+          min={vitalRanges.heartRate.min}
+          max={vitalRanges.heartRate.max}
+          step={5}
+          disabled={disabled}
+          validate={(value) =>
+            value < thresholds.heartRate.high
+              ? null
+              : "Heart rate low alarm must be less than the high alarm."
+          }
+          onCommit={(low) =>
+            onThresholdsChange({
+              ...thresholds,
+              heartRate: { ...thresholds.heartRate, low },
+            })
+          }
+        />
+        <NumberControl
+          label="Heart rate high alarm"
+          unit="bpm"
+          value={thresholds.heartRate.high}
+          min={vitalRanges.heartRate.min}
+          max={vitalRanges.heartRate.max}
+          step={5}
+          disabled={disabled}
+          validate={(value) =>
+            value > thresholds.heartRate.low
+              ? null
+              : "Heart rate high alarm must be greater than the low alarm."
+          }
+          onCommit={(high) =>
+            onThresholdsChange({
+              ...thresholds,
+              heartRate: { ...thresholds.heartRate, high },
+            })
+          }
+        />
+        <NumberControl
+          label="SpO2 low alarm"
+          unit="%"
+          value={thresholds.spo2.low}
+          min={vitalRanges.spo2.min}
+          max={vitalRanges.spo2.max}
+          step={1}
+          disabled={disabled}
+          onCommit={(low) =>
+            onThresholdsChange({ ...thresholds, spo2: { low } })
+          }
+        />
+        <NumberControl
+          label="Respiratory rate low alarm"
+          unit="/min"
+          value={thresholds.respiratoryRate.low}
+          min={vitalRanges.respiratoryRate.min}
+          max={vitalRanges.respiratoryRate.max}
+          step={1}
+          disabled={disabled}
+          validate={(value) =>
+            value < thresholds.respiratoryRate.high
+              ? null
+              : "Respiratory rate low alarm must be less than the high alarm."
+          }
+          onCommit={(low) =>
+            onThresholdsChange({
+              ...thresholds,
+              respiratoryRate: { ...thresholds.respiratoryRate, low },
+            })
+          }
+        />
+        <NumberControl
+          label="Respiratory rate high alarm"
+          unit="/min"
+          value={thresholds.respiratoryRate.high}
+          min={vitalRanges.respiratoryRate.min}
+          max={vitalRanges.respiratoryRate.max}
+          step={1}
+          disabled={disabled}
+          validate={(value) =>
+            value > thresholds.respiratoryRate.low
+              ? null
+              : "Respiratory rate high alarm must be greater than the low alarm."
+          }
+          onCommit={(high) =>
+            onThresholdsChange({
+              ...thresholds,
+              respiratoryRate: { ...thresholds.respiratoryRate, high },
+            })
+          }
+        />
+        <NumberControl
+          label="EtCO2 low alarm"
+          unit="mmHg"
+          value={thresholds.etco2.low}
+          min={vitalRanges.etco2.min}
+          max={vitalRanges.etco2.max}
+          step={1}
+          disabled={disabled}
+          validate={(value) =>
+            value < thresholds.etco2.high
+              ? null
+              : "EtCO2 low alarm must be less than the high alarm."
+          }
+          onCommit={(low) =>
+            onThresholdsChange({
+              ...thresholds,
+              etco2: { ...thresholds.etco2, low },
+            })
+          }
+        />
+        <NumberControl
+          label="EtCO2 high alarm"
+          unit="mmHg"
+          value={thresholds.etco2.high}
+          min={vitalRanges.etco2.min}
+          max={vitalRanges.etco2.max}
+          step={1}
+          disabled={disabled}
+          validate={(value) =>
+            value > thresholds.etco2.low
+              ? null
+              : "EtCO2 high alarm must be greater than the low alarm."
+          }
+          onCommit={(high) =>
+            onThresholdsChange({
+              ...thresholds,
+              etco2: { ...thresholds.etco2, high },
+            })
+          }
+        />
+      </div>
+    </section>
   );
 }
 
@@ -454,7 +744,7 @@ function MonitorSession() {
   const { sessionCode } = useParams();
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const [sweepSpeed, setSweepSpeed] = useState<SweepSpeed>(25);
   const [showGrid, setShowGrid] = useState(true);
   const [gains, setGains] = useState(initialGains);
@@ -479,6 +769,7 @@ function MonitorSession() {
             setError(null);
           } else {
             setError(result.error.message);
+            setConnectionStatus(result.error.code === "expired" ? "expired" : "error");
           }
         },
       );
@@ -488,17 +779,20 @@ function MonitorSession() {
     };
     const handleExpired = () => {
       setError("Session has expired.");
+      setConnectionStatus("expired");
     };
     const handleConnect = () => {
-      setIsConnected(true);
+      setConnectionStatus("connected");
       join();
     };
-    const handleDisconnect = () => {
-      setIsConnected(false);
+    const handleDisconnect = (reason: string) => {
+      setConnectionStatus(reason === "io server disconnect" ? "disconnected" : "reconnecting");
     };
+    const handleConnectError = () => setConnectionStatus("error");
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
     socket.on("session:snapshot", handleSnapshot);
     socket.on("session:expired", handleExpired);
 
@@ -511,6 +805,7 @@ function MonitorSession() {
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
       socket.off("session:snapshot", handleSnapshot);
       socket.off("session:expired", handleExpired);
     };
@@ -560,8 +855,21 @@ function MonitorSession() {
     setStudentChannels((current) => ({ ...current, [channel]: !current[channel] }));
   };
 
-  const isChannelActive = (channel: MonitorChannel) =>
-    snapshot?.monitor.controlMode === "instructor-managed" || studentChannels[channel];
+  const activeChannels: ActiveChannels = {
+    ecg: snapshot?.monitor.controlMode === "instructor-managed" || studentChannels.ecg,
+    pleth: snapshot?.monitor.controlMode === "instructor-managed" || studentChannels.pleth,
+    capnography:
+      snapshot?.monitor.controlMode === "instructor-managed" || studentChannels.capnography,
+  };
+  const activeAlarms = snapshot
+    ? getActiveAlarms(snapshot.patient, snapshot.monitor.alarms.thresholds, activeChannels)
+    : [];
+  const alarmAudio = useAlarmAudio(
+    activeAlarms.length > 0 && connectionStatus === "connected",
+    snapshot?.monitor.alarms.audioMuted ?? false,
+  );
+  const alarmsForChannel = (channel: MonitorChannel) =>
+    activeAlarms.filter((alarm) => alarm.channel === channel);
 
   return (
     <main className="monitor-shell">
@@ -570,7 +878,7 @@ function MonitorSession() {
           <p className="status">Monitor</p>
           <h1>ItsVital</h1>
         </div>
-        <ConnectionState isConnected={isConnected} />
+        <ConnectionState status={connectionStatus} hasSnapshot={snapshot !== null} />
       </header>
 
       {snapshot ? (
@@ -583,6 +891,35 @@ function MonitorSession() {
             onGridChange={setShowGrid}
             onSweepSpeedChange={setSweepSpeed}
           />
+
+          <section className="alarm-status-panel" aria-label="Alarm status">
+            <p
+              className={activeAlarms.length > 0 ? "alarm-summary active" : "alarm-summary"}
+              aria-live="polite"
+              data-testid="alarm-summary"
+            >
+              <strong>{activeAlarms.length > 0 ? "Active alarm" : "Alarm status"}:</strong>{" "}
+              {alarmSummary(activeAlarms)}
+            </p>
+            <div className="audio-status">
+              {snapshot.monitor.alarms.audioMuted ? (
+                <strong className="audio-muted" data-testid="audio-muted-status">
+                  Alarm audio muted by instructor
+                </strong>
+              ) : alarmAudio.state === "enabled" ? (
+                <span>Alarm audio enabled on this monitor</span>
+              ) : alarmAudio.state === "unavailable" ? (
+                <strong>Alarm audio unavailable in this browser</strong>
+              ) : (
+                <span>Alarm audio is not enabled on this monitor</span>
+              )}
+              {alarmAudio.state !== "enabled" ? (
+                <button type="button" onClick={() => void alarmAudio.enable()}>
+                  Enable alarm audio
+                </button>
+              ) : null}
+            </div>
+          </section>
 
           {snapshot.monitor.controlMode === "student-operated" ? (
             <section className="student-controls" aria-label="Student monitor controls">
@@ -608,7 +945,8 @@ function MonitorSession() {
 
           <section className="monitor-display" aria-label="Displayed waveforms and vital signs">
             <WaveformRow
-              active={isChannelActive("ecg")}
+              active={activeChannels.ecg}
+              alarms={alarmsForChannel("ecg")}
               channel="ecg"
               color="#41f294"
               gain={gains.ecg}
@@ -622,7 +960,8 @@ function MonitorSession() {
               sweepSpeed={sweepSpeed}
             />
             <WaveformRow
-              active={isChannelActive("pleth")}
+              active={activeChannels.pleth}
+              alarms={alarmsForChannel("pleth")}
               baselineRatio={0.82}
               channel="pleth"
               color="#56c8ff"
@@ -636,7 +975,8 @@ function MonitorSession() {
               sweepSpeed={sweepSpeed}
             />
             <WaveformRow
-              active={isChannelActive("capnography")}
+              active={activeChannels.capnography}
+              alarms={alarmsForChannel("capnography")}
               baselineRatio={0.86}
               channel="capnography"
               color="#f2d15f"
@@ -741,6 +1081,7 @@ function DisplayControls({
 
 function WaveformRow({
   active,
+  alarms,
   baselineRatio,
   channel,
   color,
@@ -758,6 +1099,7 @@ function WaveformRow({
   sweepSpeed,
 }: {
   active: boolean;
+  alarms: ActiveAlarm[];
   baselineRatio?: number;
   channel: MonitorChannel;
   color: string;
@@ -775,10 +1117,19 @@ function WaveformRow({
   sweepSpeed: SweepSpeed;
 }) {
   return (
-    <article className={`waveform-row waveform-row-${channel}`}>
+    <article
+      className={`waveform-row waveform-row-${channel}${alarms.length > 0 ? " waveform-row-alarm" : ""}`}
+    >
       <div className="waveform-trace">
         <div className="waveform-label">
-          <strong>{label}</strong>
+          <div>
+            <strong>{label}</strong>
+            {alarms.map((alarm) => (
+              <span className="alarm-badge" key={alarm.vital}>
+                {alarm.direction.toUpperCase()} {alarm.label}
+              </span>
+            ))}
+          </div>
           <span>{active ? `${sweepSpeed} mm/s / ${gain}x` : "Unavailable"}</span>
         </div>
         <WaveformCanvas
@@ -842,10 +1193,25 @@ function VitalDisplay({
   );
 }
 
-function ConnectionState({ isConnected }: { isConnected: boolean }) {
+function ConnectionState({
+  status,
+  hasSnapshot,
+}: {
+  status: ConnectionStatus;
+  hasSnapshot: boolean;
+}) {
+  const descriptions: Record<ConnectionStatus, string> = {
+    connecting: "Connecting",
+    connected: "Connected",
+    reconnecting: hasSnapshot ? "Reconnecting — displayed values may be stale" : "Reconnecting",
+    disconnected: "Disconnected",
+    expired: "Session expired",
+    error: hasSnapshot ? "Connection error — displayed values may be stale" : "Connection error",
+  };
+
   return (
-    <p className={isConnected ? "connection connected" : "connection disconnected"}>
-      {isConnected ? "Connected" : "Disconnected"}
+    <p className={`connection connection-${status}`} role="status">
+      {descriptions[status]}
     </p>
   );
 }

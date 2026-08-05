@@ -77,9 +77,27 @@ test("synchronizes instructor changes and restores monitor state after reconnect
   }
   await monitorPage.setViewportSize({ width: 1280, height: 720 });
 
+  await page.getByRole("button", { name: "Increase Heart rate by 5" }).click();
+  await expect(monitorPage.getByTestId("monitor-heart-rate")).toHaveText("85");
+
+  await page.getByTestId("heart-rate-input").fill("121");
+  await page.getByTestId("heart-rate-input").press("Enter");
+  await expect(monitorPage.getByTestId("monitor-heart-rate")).toHaveText("121");
+  await expect(monitorPage.getByTestId("alarm-summary")).toContainText(
+    "Heart rate HIGH at 121",
+  );
+
+  await page.getByRole("button", { name: "Mute alarm audio" }).click();
+  await expect(monitorPage.getByTestId("audio-muted-status")).toHaveText(
+    "Alarm audio muted by instructor",
+  );
+  await expect(monitorPage.getByTestId("alarm-summary")).toContainText(
+    "Heart rate HIGH at 121",
+  );
+
   await page.getByTestId("heart-rate-input").fill("104");
   await page.getByTestId("heart-rate-input").press("Enter");
-  await expect(monitorPage.getByTestId("monitor-heart-rate")).toHaveText("104");
+  await expect(monitorPage.getByTestId("alarm-summary")).toContainText("No active alarms");
 
   await page.getByTestId("student-operated-mode").click();
   await expect(page.getByTestId("student-operated-mode")).toBeChecked();
@@ -120,6 +138,12 @@ test("synchronizes instructor changes and restores monitor state after reconnect
     );
   }
 
+  await page.getByLabel("Heart rate high alarm bpm").fill("85");
+  await page.getByLabel("Heart rate high alarm bpm").press("Enter");
+  await expect(monitorPage.getByTestId("alarm-summary")).toContainText(
+    "Heart rate HIGH at 104",
+  );
+
   await monitorContext.close();
   await page.getByTestId("heart-rate-input").fill("88");
   await page.getByTestId("heart-rate-input").press("Enter");
@@ -128,6 +152,12 @@ test("synchronizes instructor changes and restores monitor state after reconnect
   const reconnectedMonitorPage = await reconnectedMonitorContext.newPage();
   await reconnectedMonitorPage.goto(`/monitor/${joinCode}`);
   await expect(reconnectedMonitorPage.getByTestId("monitor-heart-rate")).toHaveText("88");
+  await expect(reconnectedMonitorPage.getByTestId("alarm-summary")).toContainText(
+    "Heart rate HIGH at 88",
+  );
+  await expect(reconnectedMonitorPage.getByTestId("audio-muted-status")).toHaveText(
+    "Alarm audio muted by instructor",
+  );
 
   await reconnectedMonitorContext.close();
 });

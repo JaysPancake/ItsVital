@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const protocolVersion = 2;
+export const protocolVersion = 3;
 
 export const rhythmSchema = z.literal("sinus");
 export const monitorControlModeSchema = z.enum(["instructor-managed", "student-operated"]);
@@ -15,6 +15,39 @@ export const vitalRanges = {
 } as const;
 
 const integerRange = (min: number, max: number) => z.number().int().min(min).max(max);
+
+const boundedAlarmThresholdSchema = (min: number, max: number) =>
+  z
+    .object({
+      low: integerRange(min, max),
+      high: integerRange(min, max),
+    })
+    .refine((threshold) => threshold.low < threshold.high, {
+      message: "Low alarm limit must be less than high alarm limit.",
+      path: ["low"],
+    });
+
+export const monitoredVitalSchema = z.enum([
+  "heartRate",
+  "spo2",
+  "respiratoryRate",
+  "etco2",
+]);
+
+export const alarmThresholdsSchema = z.object({
+  heartRate: boundedAlarmThresholdSchema(vitalRanges.heartRate.min, vitalRanges.heartRate.max),
+  spo2: z.object({ low: integerRange(vitalRanges.spo2.min, vitalRanges.spo2.max) }),
+  respiratoryRate: boundedAlarmThresholdSchema(
+    vitalRanges.respiratoryRate.min,
+    vitalRanges.respiratoryRate.max,
+  ),
+  etco2: boundedAlarmThresholdSchema(vitalRanges.etco2.min, vitalRanges.etco2.max),
+});
+
+export const alarmConfigurationSchema = z.object({
+  thresholds: alarmThresholdsSchema,
+  audioMuted: z.boolean(),
+});
 
 export const bloodPressureSchema = z
   .object({
@@ -40,6 +73,7 @@ export const patientStateSchema = z.object({
 export const monitorStateSchema = z.object({
   rhythm: rhythmSchema,
   controlMode: monitorControlModeSchema,
+  alarms: alarmConfigurationSchema,
 });
 
 export const sessionSnapshotSchema = z.object({
@@ -80,6 +114,14 @@ export const instructorCommandSchema = z.discriminatedUnion("type", [
     type: z.literal("monitor.controlMode.set"),
     payload: z.object({ controlMode: monitorControlModeSchema }),
   }),
+  z.object({
+    type: z.literal("alarm.thresholds.set"),
+    payload: alarmThresholdsSchema,
+  }),
+  z.object({
+    type: z.literal("alarm.mute.set"),
+    payload: z.object({ audioMuted: z.boolean() }),
+  }),
 ]);
 
 export const sessionCreateRequestSchema = z.object({
@@ -115,6 +157,10 @@ export const commandApplyRequestSchema = z.object({
 
 export type Rhythm = z.infer<typeof rhythmSchema>;
 export type MonitorControlMode = z.infer<typeof monitorControlModeSchema>;
+export type MonitoredVital = z.infer<typeof monitoredVitalSchema>;
+export type AlarmThresholds = z.infer<typeof alarmThresholdsSchema>;
+export type AlarmThreshold = AlarmThresholds[MonitoredVital];
+export type AlarmConfiguration = z.infer<typeof alarmConfigurationSchema>;
 export type BloodPressure = z.infer<typeof bloodPressureSchema>;
 export type PatientState = z.infer<typeof patientStateSchema>;
 export type MonitorState = z.infer<typeof monitorStateSchema>;

@@ -17,9 +17,9 @@ patient care, diagnosis, treatment, monitoring, or clinical decision-making.
 - Keep waveform generation browser-local; do not stream waveform samples over Socket.IO.
 - Document clinical simplifications instead of inventing false precision.
 
-## Current Baseline: v0.0.2
+## Current Baseline: v0.0.3
 
-Status: Complete pre-alpha monitor and waveform stability milestone.
+Status: Complete pre-alpha basic alarms and instructor ergonomics milestone.
 
 The current project already supports:
 
@@ -33,6 +33,10 @@ The current project already supports:
 - Locally generated sinus ECG, pleth, and capnography waveforms.
 - Reusable Canvas 2D rendering with local sweep, grid, and gain controls.
 - Instructor-managed and student-operated monitor modes.
+- Runtime-validated, server-authoritative alarm limits for continuous vital signs.
+- Visible high/low alarm states and locally enabled, manufacturer-neutral alarm audio.
+- Instructor-synchronized alarm audio mute state.
+- Accessible instructor step controls and clearer connection/session messaging.
 - Monitor reconnect with full current snapshot recovery.
 - Automatic session expiration and cleanup.
 - Unit tests and a two-browser Playwright workflow.
@@ -41,7 +45,9 @@ Known limitations:
 
 - The monitor is still a narrow training slice, not a complete monitor simulation.
 - Only sinus ECG is supported.
-- Alarm behavior is not yet implemented.
+- Alarm behavior is intentionally basic: one priority, non-latching state, no delay, and no history.
+- Alarm audio must be enabled separately in each monitor browser before it can sound.
+- NIBP alarms are deferred until the timed measurement model is implemented.
 - NIBP capture is immediate and does not yet model a timed measurement cycle.
 - Scenario playback and branching instructor workflows are not yet implemented.
 
@@ -73,16 +79,18 @@ Release criteria:
 
 Goal: make the app useful for short live training moments.
 
-Planned changes:
+Status: Complete.
 
-- Add runtime-validated alarm threshold state.
-- Add visible alarm states for supported vital signs.
-- Add original, manufacturer-neutral alarm audio.
-- Add alarm silence or mute state with unmistakable visual indication.
-- Add instructor controls for alarm limits and mute state.
-- Improve connection and session state messaging.
-- Improve instructor vital controls for fast live adjustment.
-- Prevent obvious impossible values in the UI while preserving server validation.
+Completed changes:
+
+- Added runtime-validated alarm limits for heart rate, SpO2, respiratory rate, and EtCO2.
+- Added visible, non-latching high/low alarms that evaluate only active monitor channels.
+- Added an original two-beep Web Audio pattern that each monitor enables locally.
+- Added instructor-controlled, server-synchronized alarm audio mute state.
+- Added instructor alarm limit controls and accessible vital-sign step buttons.
+- Added local blood-pressure relationship validation while preserving server validation.
+- Added connecting, connected, reconnecting/stale, expired, and error messaging.
+- Kept NIBP alarms deferred to v0.0.4, alongside timed NIBP measurement behavior.
 
 Release criteria:
 

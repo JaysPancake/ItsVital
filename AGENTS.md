@@ -23,7 +23,7 @@ Do not copy proprietary monitor layouts, logos, alarm sounds, icons, graphics, o
 
 ## Documentation practices
 Be concise, specific, and value dense
-Write so that a new developer to this codebase can understand your writing, don’t assume your audience are experts in the topic/area you are writing about.
+Write so that a new developer to this codebase can understand your writing, don’t assume your audience are experts in the topic/area you are writing about. Ensure `PLANS.MD` stays up-to-date with direction choices from input, dont stray from this unless first given permission.
 
 ## Current technical direction
 

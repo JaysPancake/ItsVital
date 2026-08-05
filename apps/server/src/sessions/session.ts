@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import {
+  type AlarmThresholds,
   type CommandApplyResult,
   type InstructorCommand,
   type MonitorState,
@@ -39,9 +40,23 @@ export const defaultPatientState: PatientState = {
   bloodPressure: { systolic: 120, diastolic: 80 },
 };
 
+export const defaultAlarmThresholds: AlarmThresholds = {
+  heartRate: { low: 50, high: 120 },
+  spo2: { low: 94 },
+  respiratoryRate: { low: 8, high: 30 },
+  etco2: { low: 30, high: 50 },
+};
+
 const createDefaultPatientState = (): PatientState => ({
   ...defaultPatientState,
   bloodPressure: { ...defaultPatientState.bloodPressure },
+});
+
+const cloneAlarmThresholds = (thresholds: AlarmThresholds): AlarmThresholds => ({
+  heartRate: { ...thresholds.heartRate },
+  spo2: { ...thresholds.spo2 },
+  respiratoryRate: { ...thresholds.respiratoryRate },
+  etco2: { ...thresholds.etco2 },
 });
 
 const joinCodeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -64,7 +79,11 @@ export function createSimulationSession(now = new Date()): SimulationSession {
     revision: 0,
     expiresAt: new Date(now.getTime() + sessionTtlMs),
     patient: createDefaultPatientState(),
-    monitor: { rhythm: "sinus", controlMode: "instructor-managed" },
+    monitor: {
+      rhythm: "sinus",
+      controlMode: "instructor-managed",
+      alarms: { thresholds: cloneAlarmThresholds(defaultAlarmThresholds), audioMuted: false },
+    },
   };
 }
 
@@ -99,7 +118,13 @@ export function applyInstructorCommand(
   }
 
   const patient = { ...session.patient, bloodPressure: { ...session.patient.bloodPressure } };
-  const monitor = { ...session.monitor };
+  const monitor: MonitorState = {
+    ...session.monitor,
+    alarms: {
+      ...session.monitor.alarms,
+      thresholds: cloneAlarmThresholds(session.monitor.alarms.thresholds),
+    },
+  };
 
   switch (command.type) {
     case "vitals.patch":
@@ -113,6 +138,18 @@ export function applyInstructorCommand(
       break;
     case "monitor.controlMode.set":
       session.monitor = { ...monitor, controlMode: command.payload.controlMode };
+      break;
+    case "alarm.thresholds.set":
+      session.monitor = {
+        ...monitor,
+        alarms: { ...monitor.alarms, thresholds: cloneAlarmThresholds(command.payload) },
+      };
+      break;
+    case "alarm.mute.set":
+      session.monitor = {
+        ...monitor,
+        alarms: { ...monitor.alarms, audioMuted: command.payload.audioMuted },
+      };
       break;
   }
 
