@@ -139,45 +139,23 @@ New sessions use neutral adult training defaults: heart rate 50–120 bpm, SpO2 
 
 ## Planned roadmap
 
-### v0.0.4 — NIBP, trends, and event log
+Roadmap versions are ordered capability gates, not calendar commitments. All items below are **Planned**. See [`PLANS.md`](./PLANS.md) for goals, detailed release criteria, and architecture constraints.
 
-- NIBP measurement cycles
-- Numeric and waveform trends
-- Session event log
+- **v0.0.4 — NIBP, trends, and event log:** timed NIBP behavior, trend history, and instructor debrief events.
+- **v0.0.5 — Rhythm and artifact expansion:** an initial practical rhythm set, lead states, and motion or disconnected-lead artifacts.
+- **v0.0.6 — Portable scenarios and examples:** versioned JSON scenarios, runtime validation, import/export, browser-local storage, and bundled fictional examples without requiring playback.
+- **v0.1.0 — Scenario playback:** server-authoritative timelines, pause/resume/stop, live overrides, reconnect recovery, and playback events.
+- **v0.2.0 — Accessibility and onboarding:** a WCAG 2.2 AA target for core workflows, repeatable assistive-technology testing, and plain-language setup guidance.
+- **v0.3.0 — Approachable hosting and local operation:** an official anonymous hosted instance, tested container and guided local paths, and provider-neutral deployment documentation. GitHub Codespaces is for temporary evaluation; GitHub Pages cannot host the required Socket.IO server.
+- **v0.4.0 — Branching and debrief:** prepared instructor branches, quick live selection, recorded decisions, notes, and a debrief timeline.
+- **v0.5.0 — Mature monitor behavior:** deeper generic alarms, NIBP automation, rhythms, trends, artifacts, and display configuration.
+- **v0.6.0 — Reusable scenario library:** browser-local organization, search, backup/restore, format migration, and optional deployment-provided collections without accounts.
+- **v0.7.0 — Classroom and session collaboration:** scoped co-instructor and observer access, instructor handoff, participant visibility, and safe concurrent controls.
+- **v0.8.0 — Reliability, security, and performance:** abuse limits, protocol compatibility, load and reconnect testing, representative-device profiling, and deployment recovery.
+- **v0.9.0 — Public beta and release candidate:** v1 scope freeze, educator and accessibility review, release-blocking defect resolution, and complete operator documentation.
+- **v1.0.0 — Stable education suite:** supported monitor, scenario, branching, debrief, collaboration, hosted, and self-hosted workflows with published compatibility and support expectations.
 
-### v0.0.5 — Rhythm and artifact expansion
-
-- Additional rhythm selection
-- Lead display state
-- Motion and disconnected-lead artifacts
-
-### v0.1.0 — Scenario system
-
-- Runtime-validated scenario schema
-- Timeline actions
-- Pause and resume
-- Save and load scenarios
-- Example fictional cases
-- Scenario validation and error reporting
-
-### Long-term product direction
-
-ItsVital is intended to grow beyond a basic monitor display into a broader medical simulation platform. Potential capabilities include:
-
-- User accounts and organizations
-- Shared scenario libraries
-- Persistent storage adapters
-- Docker-based self-hosting
-- Community-hosted deployment
-- Progressive Web App support
-- Collaborative instructors
-- Twelve-lead acquisition and review
-- Debrief timelines and exports
-- Additional monitor modes and clinical devices
-- Carefully scoped ventilator, CPR-feedback, manikin, or hardware integrations
-- Extensible interfaces for community-developed simulation modules
-
-These additions should support the primary goal of delivering a useful, affordable simulator—not turn the project into a framework that requires organizations to build their own product before they can train with it.
+Accounts and organizations, hosted personal scenario storage, twelve-lead review, additional simulated devices, native applications, hardware integrations, and community plugin APIs are not required for v1.0. They may be promoted later through explicit product and architecture decisions.
 
 ## Technical direction
 
